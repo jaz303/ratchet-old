@@ -22,7 +22,8 @@ enum {
     AST_IDENT       = 0x03,
 
     AST_ADD         = 0x81,
-    AST_ASSIGN      = 0x82
+    AST_SUB         = 0x82,
+    AST_ASSIGN      = 0x83
 };
 
 typedef struct ast_node ast_node_t;
@@ -64,8 +65,9 @@ enum {
     OP_PRINT    = (1 << 26),
     OP_HALT     = (2 << 26),
     OP_ADD      = (3 << 26),
-    OP_LOADK    = (4 << 26),
-    OP_COPY     = (5 << 26)
+    OP_SUB      = (4 << 26),
+    OP_LOADK    = (5 << 26),
+    OP_COPY     = (6 << 26)
 };
 
 val_t mk_nil() {
@@ -166,11 +168,18 @@ int compile_exp(val_t val, code_t *co) {
     } else if (val.type == T_AST) {
         if (val.ast->type & 0x80) {
             ast_binop_t *op = (ast_binop_t*)val.ast;
-            if (op->base.type == AST_ADD) {
+            if (op->base.type == AST_ADD
+                || op->base.type == AST_SUB) {
                 int lreg = compile_exp(op->l, co);
                 int rreg = compile_exp(op->r, co);
                 int oreg = co->reg++;
-                co->code[co->pi++] = OP_ADD | (oreg << 16) | (lreg << 8) | rreg;
+                int opcode;
+                if (op->base.type == AST_ADD) {
+                    opcode = OP_ADD;
+                } else if (op->base.type == AST_SUB) {
+                    opcode = OP_SUB;
+                }
+                co->code[co->pi++] = opcode | (oreg << 16) | (lreg << 8) | rreg;
                 return oreg;
             } else if (op->base.type == AST_ASSIGN) {
                 int dst = op->l.ival;
@@ -225,6 +234,14 @@ void run(code_t *co) {
                     reg[rd].ival = reg[r2].ival + reg[r3].ival;
                 }
                 break;
+            case OP_SUB:
+                {
+                    int rd = (op >> 16) & 0xFF;
+                    int r2 = (op >>  8) & 0xFF;
+                    int r3 = (op >>  0) & 0xFF;
+                    reg[rd].ival = reg[r2].ival - reg[r3].ival;
+                }
+                break;
             case OP_LOADK:
                 {
                     int r = (op >> 16) & 0xFF;
@@ -259,7 +276,7 @@ int main(int argc, char *argv[]) {
         mk_ast_stmt(
             mk_ast_binop(AST_ASSIGN,
                 mk_ident(1),
-                mk_ast_binop(AST_ADD,
+                mk_ast_binop(AST_SUB,
                     mk_ident(0),
                     mk_int(5)
                 )
