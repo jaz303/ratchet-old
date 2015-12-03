@@ -26,6 +26,8 @@ enum {
     AST_ASSIGN      = 0x83
 };
 
+const int AST_BINOP_MASK = 0x80;
+
 typedef struct ast_node ast_node_t;
 
 typedef struct val val_t;
@@ -166,19 +168,19 @@ int compile_exp(val_t val, code_t *co) {
         co->code[co->pi++] = OP_LOADK | (dst << 16) | constant;
         return dst;
     } else if (val.type == T_AST) {
-        if (val.ast->type & 0x80) {
+        if (val.ast->type & AST_BINOP_MASK) {
             ast_binop_t *op = (ast_binop_t*)val.ast;
             if (op->base.type == AST_ADD
                 || op->base.type == AST_SUB) {
                 int lreg = compile_exp(op->l, co);
                 int rreg = compile_exp(op->r, co);
                 int oreg = co->reg++;
-                int opcode;
-                if (op->base.type == AST_ADD) {
-                    opcode = OP_ADD;
-                } else if (op->base.type == AST_SUB) {
-                    opcode = OP_SUB;
-                }
+                int opcodes[] = {
+                    0,
+                    OP_ADD,
+                    OP_SUB
+                };
+                int opcode = opcodes[op->base.type & ~AST_BINOP_MASK];
                 co->code[co->pi++] = opcode | (oreg << 16) | (lreg << 8) | rreg;
                 return oreg;
             } else if (op->base.type == AST_ASSIGN) {
