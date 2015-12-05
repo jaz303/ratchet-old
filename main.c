@@ -18,7 +18,7 @@ enum {
 };
 
 enum {
-    AST_STMTS       = 0x01,
+    AST_LIST        = 0x01,
     AST_PRINT       = 0x02,
     AST_IDENT       = 0x03,
     AST_CALL        = 0x04,
@@ -60,11 +60,11 @@ typedef struct ast_print {
     val_t exp;
 } ast_print_t;
 
-typedef struct ast_stmts ast_stmts_t;
+typedef struct ast_list ast_list_t;
 
-struct ast_stmts {
+struct ast_list {
     ast_node_t base;
-    val_t stmt;
+    val_t exp;
     val_t next;
 };
 
@@ -109,8 +109,8 @@ val_t mk_ident(int id) {
     val_t val = { .type = T_AST, .ast = (ast_node_t*) node }
 
 val_t mk_ast_list(val_t stmt, val_t next) {
-    ALLOC_AST(ast_stmts_t, AST_STMTS);
-    node->stmt = stmt;
+    ALLOC_AST(ast_list_t, AST_LIST);
+    node->exp = stmt;
     node->next = next;
     return val;
 }
@@ -162,7 +162,7 @@ int ast_list_len(val_t v) {
     int len = 0;
     while (!nil_p(v)) {
         len++;
-        v = ((ast_stmts_t*)v.ast)->next;
+        v = ((ast_list_t*)v.ast)->next;
     }
     return len;
 }
@@ -177,7 +177,7 @@ void compile_print(val_t exp, code_t *co);
 
 void compile_statements(val_t stmt, code_t *code) {
     while (!nil_p(stmt)) {
-        val_t subj = ((ast_stmts_t*)stmt.ast)->stmt;
+        val_t subj = ((ast_list_t*)stmt.ast)->exp;
         switch (ast_type(subj)) {
             case AST_PRINT:
                 compile_print(subj, code);
@@ -186,7 +186,7 @@ void compile_statements(val_t stmt, code_t *code) {
                 compile_exp(subj, code);
                 break;
         }
-        stmt = ((ast_stmts_t*)stmt.ast)->next;
+        stmt = ((ast_list_t*)stmt.ast)->next;
     }
 }
 
@@ -233,10 +233,10 @@ int compile_exp(val_t val, code_t *co) {
             val_t thisarg = call->args;
             int argix = 0;
             while (!nil_p(thisarg)) {
-                int r_arg = compile_exp(((ast_stmts_t*)thisarg.ast)->stmt, co);
+                int r_arg = compile_exp(((ast_list_t*)thisarg.ast)->exp, co);
                 co->code[co->pi++] = OP_COPY | ((r_argbase + argix) << 16) | r_arg;
                 argix++;
-                thisarg = ((ast_stmts_t*)thisarg.ast)->next;
+                thisarg = ((ast_list_t*)thisarg.ast)->next;
             }
             int r_res = co->reg++;
             co->code[co->pi++] = OP_CALL | (r_callee << 16) | (nargs << 8) | r_res;
