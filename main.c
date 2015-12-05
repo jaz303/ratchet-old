@@ -108,7 +108,7 @@ val_t mk_ident(int id) {
     ((ast_node_t*)node)->type = tag; \
     val_t val = { .type = T_AST, .ast = (ast_node_t*) node }
 
-val_t mk_ast_stmt(val_t stmt, val_t next) {
+val_t mk_ast_list(val_t stmt, val_t next) {
     ALLOC_AST(ast_stmts_t, AST_STMTS);
     node->stmt = stmt;
     node->next = next;
@@ -337,9 +337,9 @@ int main(int argc, char *argv[]) {
     // b = a + 5
     // print b
 
-    val_t program = mk_ast_stmt(
+    val_t program = mk_ast_list(
         mk_ast_binop(AST_ASSIGN, mk_ident(0), mk_int(10)),
-        mk_ast_stmt(
+        mk_ast_list(
             mk_ast_binop(AST_ASSIGN,
                 mk_ident(1),
                 mk_ast_binop(AST_ADD,
@@ -347,15 +347,15 @@ int main(int argc, char *argv[]) {
                     mk_int(5)
                 )
             ),
-            mk_ast_stmt(
+            mk_ast_list(
                 mk_ast_print(
                     mk_ast_call(
                         mk_ident(2),
-                        mk_ast_stmt(
+                        mk_ast_list(
                             mk_int(2),
-                            mk_ast_stmt(
+                            mk_ast_list(
                                 mk_ident(0),
-                                mk_ast_stmt(
+                                mk_ast_list(
                                     mk_ident(1),
                                     mk_nil()
                                 )
