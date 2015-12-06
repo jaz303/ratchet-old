@@ -1,3 +1,46 @@
-[ ] native function calls
-[ ] variable access/assignment
-[ ] while loop
+- strings
+- GC
+- parser/lexer
+- arrays
+- dictionaries
+- classes
+- operator overloading
+- tasks (yield, spawn)
+- XML parsing; data language
+- channels
+- threadpool
+- tagged value repr
+- symbol tables
+- register allocation
+- if/else
+- function definitions + compilation
+- module system
+- blocks
+- closures
+- immutable datastructures
+- UTF8
+- stdlib
+	- file IO
+	- string
+	- collections
+	- network
+
+- buffers
+- streams
+
+Ideas:
+	- hot module reloading
+	- modules can be instanced (have initialize function)
+	- to use threads, "spawn thread Module(1,2,3)"
+	- private class extensions (like JS symbols)
+	- class extension methods
+	- object object system (optional)
+	- embedded grammars
+
+Done
+----
+
+- while
+- function call AST
+- native function repr
+- native function calls
