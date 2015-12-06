@@ -24,4 +24,4 @@ Other planned features:
   * hot module reloading
   * support multiple OS threads without GIL
   * embedded grammars for DSLs
-  * concise syntax for arrays, maps, sets, vectors, tuples and colors
+  * concise syntax for arrays, maps, sets, vectors/matrices, tuples and colors
