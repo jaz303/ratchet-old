@@ -24,10 +24,12 @@ enum {
     AST_PRINT       = 0x02,
     AST_IDENT       = 0x03,
     AST_CALL        = 0x04,
+    AST_WHILE       = 0x05,
 
     AST_ADD         = 0x81,
     AST_SUB         = 0x82,
-    AST_ASSIGN      = 0x83
+    AST_LT          = 0x83,
+    AST_ASSIGN      = 0x84
 };
 
 const int AST_BINOP_MASK = 0x80;
@@ -70,6 +72,12 @@ struct ast_list {
     val_t next;
 };
 
+typedef struct ast_while {
+    ast_node_t base;
+    val_t cond;
+    val_t body;
+} ast_while_t;
+
 typedef struct ast_binop {
     ast_node_t base;
     val_t l;
@@ -83,7 +91,10 @@ enum {
     OP_SUB      = (4 << 26),
     OP_LOADK    = (5 << 26),
     OP_COPY     = (6 << 26),
-    OP_CALL     = (7 << 26)
+    OP_CALL     = (7 << 26),
+    OP_LT       = (8 << 26),
+    OP_JMP      = (9 << 26),
+    OP_JMPF     = (10 << 26)
 };
 
 val_t mk_nil() {
@@ -137,6 +148,13 @@ val_t mk_ast_binop(int type, val_t l, val_t r) {
     return val;
 }
 
+val_t mk_ast_while(val_t cond, val_t body) {
+    ALLOC_AST(ast_while_t, AST_WHILE);
+    node->cond = cond;
+    node->body = body;
+    return val;
+}
+
 typedef uint32_t inst_t;
 
 typedef struct {
@@ -157,7 +175,7 @@ int nil_p(val_t v) {
 }
 
 int truthy_p(val_t v) {
-    return (v.type !== T_NIL) && (v.type !== T_FALSE);
+    return (v.type != T_NIL) && (v.type != T_FALSE);
 }
 
 int ast_type(val_t v) {
@@ -175,6 +193,7 @@ int ast_list_len(val_t v) {
 
 int compile_exp(val_t exp, code_t *code);
 void compile_print(val_t exp, code_t *co);
+void compile_while(val_t node, code_t *co);
 
 // Register allocation:
 // https://en.wikipedia.org/wiki/Sethi%E2%80%93Ullman_algorithm
@@ -187,6 +206,9 @@ void compile_statements(val_t stmt, code_t *code) {
         switch (ast_type(subj)) {
             case AST_PRINT:
                 compile_print(subj, code);
+                break;
+            case AST_WHILE:
+                compile_while(subj, code);
                 break;
             default:
                 compile_exp(subj, code);
@@ -210,14 +232,16 @@ int compile_exp(val_t val, code_t *co) {
         if (val.ast->type & AST_BINOP_MASK) {
             ast_binop_t *op = (ast_binop_t*)val.ast;
             if (op->base.type == AST_ADD
-                || op->base.type == AST_SUB) {
+                || op->base.type == AST_SUB
+                || op->base.type == AST_LT) {
                 int lreg = compile_exp(op->l, co);
                 int rreg = compile_exp(op->r, co);
                 int oreg = co->reg++;
                 int opcodes[] = {
                     0,
                     OP_ADD,
-                    OP_SUB
+                    OP_SUB,
+                    OP_LT
                 };
                 int opcode = opcodes[op->base.type & ~AST_BINOP_MASK];
                 co->code[co->pi++] = opcode | (oreg << 16) | (lreg << 8) | rreg;
@@ -256,6 +280,15 @@ int compile_exp(val_t val, code_t *co) {
 void compile_print(val_t exp, code_t *co) {
     int reg = compile_exp(((ast_print_t*)exp.ast)->exp, co);
     co->code[co->pi++] = OP_PRINT | reg;
+}
+
+void compile_while(val_t node, code_t *co) {
+    int start = co->pi;
+    int reg = compile_exp(((ast_while_t*)node.ast)->cond, co);
+    int jumper = co->pi++;
+    compile_statements(((ast_while_t*)node.ast)->body, co);
+    co->code[co->pi++] = OP_JMP | start;
+    co->code[jumper] = OP_JMPF | (reg << 16) | co->pi;
 }
 
 code_t* compile(val_t program, int nlocals) {
@@ -328,6 +361,28 @@ void run(code_t *co) {
                     reg[result] = reg[base].fn(&reg[base+1], nargs);
                 }
                 break;
+            case OP_LT:
+                {
+                    int rd = (op >> 16) & 0xFF;
+                    int r2 = (op >>  8) & 0xFF;
+                    int r3 = (op >>  0) & 0xFF;
+                    reg[rd].type = (reg[r2].ival < reg[r3].ival)
+                        ? T_TRUE
+                        : T_FALSE;
+                }
+                break;
+            case OP_JMP:
+                {
+                    ip = op & 0x00FFFFFF;
+                }
+                break;
+            case OP_JMPF:
+                {
+                    if (!truthy_p(reg[(op >> 16) & 0xFF])) {
+                        ip = op & 0x0000FFFF;
+                    }
+                }
+                break;
             case OP_HALT:
                 {
                     printf("execution terminated\n");    
@@ -343,34 +398,57 @@ int main(int argc, char *argv[]) {
     // b = a + 5
     // print b
 
+    // val_t program = mk_ast_list(
+    //     mk_ast_binop(AST_ASSIGN, mk_ident(0), mk_int(10)),
+    //     mk_ast_list(
+    //         mk_ast_binop(AST_ASSIGN,
+    //             mk_ident(1),
+    //             mk_ast_binop(AST_ADD,
+    //                 mk_ident(0),
+    //                 mk_int(5)
+    //             )
+    //         ),
+    //         mk_ast_list(
+    //             mk_ast_print(
+    //                 mk_ast_call(
+    //                     mk_ident(2),
+    //                     mk_ast_list(
+    //                         mk_int(2),
+    //                         mk_ast_list(
+    //                             mk_ident(0),
+    //                             mk_ast_list(
+    //                                 mk_ident(1),
+    //                                 mk_nil()
+    //                             )
+    //                         )
+    //                     )
+    //                 )
+    //             ),
+    //             mk_nil()
+    //         )
+    //     )
+    // );
+
     val_t program = mk_ast_list(
-        mk_ast_binop(AST_ASSIGN, mk_ident(0), mk_int(10)),
+        mk_ast_binop(AST_ASSIGN, mk_ident(0), mk_int(0)),
         mk_ast_list(
-            mk_ast_binop(AST_ASSIGN,
-                mk_ident(1),
-                mk_ast_binop(AST_ADD,
-                    mk_ident(0),
-                    mk_int(5)
+            mk_ast_while(
+                mk_ast_binop(AST_LT, mk_ident(0), mk_int(10)),
+                mk_ast_list(
+                    mk_ast_print(mk_ident(0)),
+                    mk_ast_list(
+                        mk_ast_binop(AST_ASSIGN,
+                            mk_ident(0),
+                            mk_ast_binop(AST_ADD,
+                                mk_ident(0),
+                                mk_int(1)
+                            )
+                        ),
+                        mk_nil()
+                    )
                 )
             ),
-            mk_ast_list(
-                mk_ast_print(
-                    mk_ast_call(
-                        mk_ident(2),
-                        mk_ast_list(
-                            mk_int(2),
-                            mk_ast_list(
-                                mk_ident(0),
-                                mk_ast_list(
-                                    mk_ident(1),
-                                    mk_nil()
-                                )
-                            )
-                        )
-                    )
-                ),
-                mk_nil()
-            )
+            mk_nil()
         )
     );
 
