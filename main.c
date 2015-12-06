@@ -11,6 +11,8 @@
 
 enum {
     T_NIL,
+    T_TRUE,
+    T_FALSE,
     T_AST,
     T_INT,
     T_IDENT,
@@ -152,6 +154,10 @@ val_t mul(val_t *args, int nargs) {
 
 int nil_p(val_t v) {
     return v.type == T_NIL;
+}
+
+int truthy_p(val_t v) {
+    return (v.type !== T_NIL) && (v.type !== T_FALSE);
 }
 
 int ast_type(val_t v) {
