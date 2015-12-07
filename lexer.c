@@ -76,6 +76,15 @@ void rt_lexer_init(rt_lexer_t *lexer, char *text) {
     lexer->error = NULL;
 }
 
+void rt_lexer_clone(rt_lexer_t *d, const rt_lexer_t *s) {
+    d->text = s->text;
+    d->pos = s->pos;
+    d->tok_start = s->tok_start;
+    d->tok_len = s->tok_len;
+    d->tok = s->tok;
+    d->error = s->error;
+}
+
 int rt_lexer_next(rt_lexer_t *l) {
     if (l->error) {
         return TOK_ERROR;
