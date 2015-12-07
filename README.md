@@ -13,7 +13,7 @@ Influences include:
   * Go: goroutines, channels
   * Lua: register-based VM, closure implementation based on upvals
   * Smalltalk: message passing, extensible classes
-  * Clojure: immutable collections
+  * Clojure: immutable collections, transducers
   * JSX: embedded HTML/XML
   * Potion: data language
   * Ruby: symbols
