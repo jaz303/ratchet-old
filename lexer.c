@@ -21,9 +21,7 @@ enum {
 
 typedef struct rt_lexer {
     char *text;
-    size_t len;
     size_t pos;
-    int state;
     int tok_start;
     int tok_len;
     char *tok;
