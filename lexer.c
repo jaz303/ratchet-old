@@ -3,6 +3,7 @@
 
 enum {
     TOK_IDENT = 1,
+    TOK_NL,
     TOK_ASSIGN,
     TOK_WHILE,
     TOK_LT,
@@ -41,7 +42,7 @@ typedef struct rt_lexer {
     return TOK_ERROR
 
 int space_p(char c) {
-    return c == ' ' || c == '\r' || c == '\n' || c == '\t';
+    return c == ' ' || c == '\t';
 }
 
 int digit_p(char c) {
@@ -94,6 +95,13 @@ int rt_lexer_next(rt_lexer_t *l) {
     }
     switch (CURR()) {
         case 0: EMIT(TOK_EOF);
+        case '\r':
+            NEXT();
+            if (CURR() == '\n') {
+                NEXT();
+            }
+            EMIT(TOK_NL);
+        case '\n': NEXT(); EMIT(TOK_NL);
         case '(': NEXT(); EMIT(TOK_LPAREN);
         case ')': NEXT(); EMIT(TOK_RPAREN);
         case '{': NEXT(); EMIT(TOK_LBRACE);
