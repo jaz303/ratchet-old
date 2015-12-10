@@ -1,6 +1,3 @@
-#include "prelude.inc.c"
-#include "util.inc.c"
-
 enum {
     TOK_IDENT = 1,
     TOK_NL,
@@ -136,16 +133,6 @@ int rt_lexer_next(rt_lexer_t *l) {
             } else {
                 ERROR("unexpected character in input");
             }
-    }
-}
-
-int main(int argc, char *argv[]) {
-    char *source = readfile(argv[1]);
-    rt_lexer_t lexer;
-    rt_lexer_init(&lexer, source);
-    int tok;
-    while ((tok = rt_lexer_next(&lexer)) < TOK_META) {
-        printf("%d\n", tok);
     }
 }
 

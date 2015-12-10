@@ -2,87 +2,21 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+typedef struct ast_node ast_node_t;
+
+#include "util.inc.c"
+#include "val.inc.c"
+#include "ast.inc.c"
+#include "lexer.inc.c"
+#include "symboltable.inc.c"
+#include "parser.inc.c"
+
 /**
  * Next steps
  *
  * 1. decorate AST
  * 2. replace naive register allocation with Sethi-Ullman
  */
-
-enum {
-    T_NIL,
-    T_TRUE,
-    T_FALSE,
-    T_AST,
-    T_INT,
-    T_IDENT,
-    T_FOREIGN_FN
-};
-
-enum {
-    AST_LIST        = 0x01,
-    AST_PRINT       = 0x02,
-    AST_IDENT       = 0x03,
-    AST_CALL        = 0x04,
-    AST_WHILE       = 0x05,
-
-    AST_ADD         = 0x81,
-    AST_SUB         = 0x82,
-    AST_LT          = 0x83,
-    AST_ASSIGN      = 0x84
-};
-
-const int AST_BINOP_MASK = 0x80;
-
-typedef struct ast_node ast_node_t;
-
-typedef struct val val_t;
-
-typedef val_t (*foreign_fn_f)(val_t *args, int nargs);
-
-struct val {
-    int type;
-    union {
-        int ival;
-        ast_node_t *ast;
-        foreign_fn_f fn;
-    };
-};
-
-struct ast_node {
-    int type;
-};
-
-typedef struct ast_call {
-    ast_node_t base;
-    val_t callee;
-    val_t args;
-} ast_call_t;
-
-typedef struct ast_print {
-    ast_node_t base;
-    val_t exp;
-} ast_print_t;
-
-typedef struct ast_list ast_list_t;
-
-struct ast_list {
-    ast_node_t base;
-    val_t exp;
-    val_t next;
-};
-
-typedef struct ast_while {
-    ast_node_t base;
-    val_t cond;
-    val_t body;
-} ast_while_t;
-
-typedef struct ast_binop {
-    ast_node_t base;
-    val_t l;
-    val_t r;
-} ast_binop_t;
 
 enum {
     OP_PRINT    = (1 << 26),
@@ -97,64 +31,6 @@ enum {
     OP_JMPF     = (10 << 26)
 };
 
-val_t mk_nil() {
-    val_t out = { .type = T_NIL };
-    return out;
-}
-
-val_t mk_int(int val) {
-    val_t out;
-    out.type = T_INT;
-    out.ival = val;
-    return out;
-}
-
-val_t mk_ident(int id) {
-    val_t out;
-    out.type = T_IDENT;
-    out.ival = id;
-    return out;
-}
-
-#define ALLOC_AST(struct_type, tag) \
-    struct_type *node = malloc(sizeof(struct_type)); \
-    ((ast_node_t*)node)->type = tag; \
-    val_t val = { .type = T_AST, .ast = (ast_node_t*) node }
-
-val_t mk_ast_list(val_t stmt, val_t next) {
-    ALLOC_AST(ast_list_t, AST_LIST);
-    node->exp = stmt;
-    node->next = next;
-    return val;
-}
-
-val_t mk_ast_call(val_t callee, val_t args) {
-    ALLOC_AST(ast_call_t, AST_CALL);
-    node->callee = callee;
-    node->args = args;
-    return val;
-}
-
-val_t mk_ast_print(val_t exp) {
-    ALLOC_AST(ast_print_t, AST_PRINT);
-    node->exp = exp;
-    return val;
-}
-
-val_t mk_ast_binop(int type, val_t l, val_t r) {
-    ALLOC_AST(ast_binop_t, type);
-    node->l = l;
-    node->r = r;
-    return val;
-}
-
-val_t mk_ast_while(val_t cond, val_t body) {
-    ALLOC_AST(ast_while_t, AST_WHILE);
-    node->cond = cond;
-    node->body = body;
-    return val;
-}
-
 typedef uint32_t inst_t;
 
 typedef struct {
@@ -168,27 +44,6 @@ typedef struct {
 val_t mul(val_t *args, int nargs) {
     printf("mul: %d %d %d\n", args[0].ival, args[1].ival, args[2].ival);
     return mk_int(args[0].ival * args[1].ival * args[2].ival);
-}
-
-int nil_p(val_t v) {
-    return v.type == T_NIL;
-}
-
-int truthy_p(val_t v) {
-    return (v.type != T_NIL) && (v.type != T_FALSE);
-}
-
-int ast_type(val_t v) {
-    return v.ast->type;
-}
-
-int ast_list_len(val_t v) {
-    int len = 0;
-    while (!nil_p(v)) {
-        len++;
-        v = ((ast_list_t*)v.ast)->next;
-    }
-    return len;
 }
 
 int compile_exp(val_t exp, code_t *code);
@@ -393,69 +248,97 @@ void run(code_t *co) {
 }
 
 int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <sourcefile>\n", argv[0]);
+        return 1;
+    }
 
-    // a = 10
-    // b = a + 5
-    // print b
+    char *source = readfile(argv[1]);
+    if (!source) {
+        fprintf(stderr, "unable to read source file: %s\n", argv[1]);
+        return 1;
+    }
 
-    // val_t program = mk_ast_list(
-    //     mk_ast_binop(AST_ASSIGN, mk_ident(0), mk_int(10)),
-    //     mk_ast_list(
-    //         mk_ast_binop(AST_ASSIGN,
-    //             mk_ident(1),
-    //             mk_ast_binop(AST_ADD,
-    //                 mk_ident(0),
-    //                 mk_int(5)
-    //             )
-    //         ),
-    //         mk_ast_list(
-    //             mk_ast_print(
-    //                 mk_ast_call(
-    //                     mk_ident(2),
-    //                     mk_ast_list(
-    //                         mk_int(2),
-    //                         mk_ast_list(
-    //                             mk_ident(0),
-    //                             mk_ast_list(
-    //                                 mk_ident(1),
-    //                                 mk_nil()
-    //                             )
-    //                         )
-    //                     )
-    //                 )
-    //             ),
-    //             mk_nil()
-    //         )
-    //     )
-    // );
+    rt_parser_t parser;
+    rt_lexer_init(&parser.lexer, source);
+    rt_parser_init(&parser);
 
-    val_t program = mk_ast_list(
-        mk_ast_binop(AST_ASSIGN, mk_ident(0), mk_int(0)),
-        mk_ast_list(
-            mk_ast_while(
-                mk_ast_binop(AST_LT, mk_ident(0), mk_int(10)),
-                mk_ast_list(
-                    mk_ast_print(mk_ident(0)),
-                    mk_ast_list(
-                        mk_ast_binop(AST_ASSIGN,
-                            mk_ident(0),
-                            mk_ast_binop(AST_ADD,
-                                mk_ident(0),
-                                mk_int(1)
-                            )
-                        ),
-                        mk_nil()
-                    )
-                )
-            ),
-            mk_nil()
-        )
-    );
+    val_t mod = rt_parse_module(&parser);
 
-    code_t *code = compile(program, 3);
+    free(source);
 
-    run(code);
+    if (nil_p(mod)) {
+        fprintf(stderr, "parse error: %s\n", parser.error);
+        return 1;
+    }
 
-    return 0;
-
+    // TODO: compile, run
 }
+
+// int main(int argc, char *argv[]) {
+
+//     // a = 10
+//     // b = a + 5
+//     // print b
+
+//     // val_t program = mk_ast_list(
+//     //     mk_ast_binop(AST_ASSIGN, mk_ident(0), mk_int(10)),
+//     //     mk_ast_list(
+//     //         mk_ast_binop(AST_ASSIGN,
+//     //             mk_ident(1),
+//     //             mk_ast_binop(AST_ADD,
+//     //                 mk_ident(0),
+//     //                 mk_int(5)
+//     //             )
+//     //         ),
+//     //         mk_ast_list(
+//     //             mk_ast_print(
+//     //                 mk_ast_call(
+//     //                     mk_ident(2),
+//     //                     mk_ast_list(
+//     //                         mk_int(2),
+//     //                         mk_ast_list(
+//     //                             mk_ident(0),
+//     //                             mk_ast_list(
+//     //                                 mk_ident(1),
+//     //                                 mk_nil()
+//     //                             )
+//     //                         )
+//     //                     )
+//     //                 )
+//     //             ),
+//     //             mk_nil()
+//     //         )
+//     //     )
+//     // );
+
+//     val_t program = mk_ast_list(
+//         mk_ast_binop(AST_ASSIGN, mk_ident(0), mk_int(0)),
+//         mk_ast_list(
+//             mk_ast_while(
+//                 mk_ast_binop(AST_LT, mk_ident(0), mk_int(10)),
+//                 mk_ast_list(
+//                     mk_ast_print(mk_ident(0)),
+//                     mk_ast_list(
+//                         mk_ast_binop(AST_ASSIGN,
+//                             mk_ident(0),
+//                             mk_ast_binop(AST_ADD,
+//                                 mk_ident(0),
+//                                 mk_int(1)
+//                             )
+//                         ),
+//                         mk_nil()
+//                     )
+//                 )
+//             ),
+//             mk_nil()
+//         )
+//     );
+
+//     code_t *code = compile(program, 3);
+
+//     run(code);
+
+//     return 0;
+
+// }
