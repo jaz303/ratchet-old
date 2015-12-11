@@ -55,12 +55,7 @@ int ident_rest_p(char c) {
 }
 
 int rt_lexer_texteq(rt_lexer_t *l, const char *text) {
-    int p = 0;
-    while (p < l->tok_len && text[p]) {
-        if (l->tok[p] != text[p]) return 0;
-        p++;
-    }
-    return p == l->tok_len && text[p] == 0;
+    return streql(text, l->tok, l->tok_len);
 }
 
 void rt_lexer_init(rt_lexer_t *lexer, char *text) {

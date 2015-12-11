@@ -8,7 +8,7 @@ typedef struct ast_node ast_node_t;
 #include "val.inc.c"
 #include "ast.inc.c"
 #include "lexer.inc.c"
-#include "symboltable.inc.c"
+#include "intern.inc.c"
 #include "parser.inc.c"
 
 /**
@@ -248,6 +248,8 @@ void run(code_t *co) {
 }
 
 int main(int argc, char *argv[]) {
+    rt_intern_init();
+
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <sourcefile>\n", argv[0]);
         return 1;
