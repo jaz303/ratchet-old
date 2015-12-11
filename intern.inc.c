@@ -9,7 +9,7 @@ long symt_next = 1;
 struct symt_entry *symt_root = NULL;
 
 const int symt_align = 8;
-const int symt_chunk_sz = 16384;
+const int symt_chunk_sz = 512;
 char *symt_chunk = 0;
 int symt_chunk_pos = 0;
 
@@ -23,9 +23,13 @@ char *intern_alloc_chunk() {
 }
 
 char *intern_get_slice(int len) {
-	if (len >= symt_chunk_sz) {
-		fprintf(stderr, "maximum symbol size (%d) exceeded\n", symt_chunk_sz);
-		exit(1);
+	if (len > symt_chunk_sz) {
+		char *slice = malloc(len);
+		if (!slice) {
+			fprintf(stderr, "failed to allocated intern slice");
+			exit(1);
+		}
+		return slice;
 	}
 	if (symt_chunk_pos + len > symt_chunk_sz) {
 		symt_chunk = intern_alloc_chunk();
