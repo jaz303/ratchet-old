@@ -41,9 +41,18 @@ typedef struct {
     int reg;
 } code_t;
 
-val_t mul(val_t *args, int nargs) {
-    printf("mul: %d %d %d\n", args[0].ival, args[1].ival, args[2].ival);
-    return mk_int(args[0].ival * args[1].ival * args[2].ival);
+val_t p1(val_t *args, int nargs) {
+    printf("Hello from P1!\n");
+    // printf("mul: %d %d %d\n", args[0].ival, args[1].ival, args[2].ival);
+    // return mk_int(args[0].ival * args[1].ival * args[2].ival);
+    return mk_nil();
+}
+
+val_t p2(val_t *args, int nargs) {
+    printf("Hello from P2!\n");
+    // printf("mul: %d %d %d\n", args[0].ival, args[1].ival, args[2].ival);
+    // return mk_int(args[0].ival * args[1].ival * args[2].ival);
+    return mk_nil();
 }
 
 int compile_exp(val_t exp, code_t *code);
@@ -165,8 +174,10 @@ void run(code_t *co) {
     int ip = 0;
     val_t reg[128];
 
+    reg[1].type = T_FOREIGN_FN;
+    reg[1].fn = p1;
     reg[2].type = T_FOREIGN_FN;
-    reg[2].fn = mul;
+    reg[2].fn = p2;
 
     while (1) {
         inst_t op = co->code[ip++];
@@ -267,6 +278,8 @@ int main(int argc, char *argv[]) {
 
     val_t mod = rt_parse_module(&parser);
 
+    printf("node type: %d\n", mod.ast->type);
+
     free(source);
 
     if (nil_p(mod)) {
@@ -274,73 +287,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // TODO: compile, run
+    code_t *code = compile(mod, 3);
+    run(code);
 }
-
-// int main(int argc, char *argv[]) {
-
-//     // a = 10
-//     // b = a + 5
-//     // print b
-
-//     // val_t program = mk_ast_list(
-//     //     mk_ast_binop(AST_ASSIGN, mk_ident(0), mk_int(10)),
-//     //     mk_ast_list(
-//     //         mk_ast_binop(AST_ASSIGN,
-//     //             mk_ident(1),
-//     //             mk_ast_binop(AST_ADD,
-//     //                 mk_ident(0),
-//     //                 mk_int(5)
-//     //             )
-//     //         ),
-//     //         mk_ast_list(
-//     //             mk_ast_print(
-//     //                 mk_ast_call(
-//     //                     mk_ident(2),
-//     //                     mk_ast_list(
-//     //                         mk_int(2),
-//     //                         mk_ast_list(
-//     //                             mk_ident(0),
-//     //                             mk_ast_list(
-//     //                                 mk_ident(1),
-//     //                                 mk_nil()
-//     //                             )
-//     //                         )
-//     //                     )
-//     //                 )
-//     //             ),
-//     //             mk_nil()
-//     //         )
-//     //     )
-//     // );
-
-//     val_t program = mk_ast_list(
-//         mk_ast_binop(AST_ASSIGN, mk_ident(0), mk_int(0)),
-//         mk_ast_list(
-//             mk_ast_while(
-//                 mk_ast_binop(AST_LT, mk_ident(0), mk_int(10)),
-//                 mk_ast_list(
-//                     mk_ast_print(mk_ident(0)),
-//                     mk_ast_list(
-//                         mk_ast_binop(AST_ASSIGN,
-//                             mk_ident(0),
-//                             mk_ast_binop(AST_ADD,
-//                                 mk_ident(0),
-//                                 mk_int(1)
-//                             )
-//                         ),
-//                         mk_nil()
-//                     )
-//                 )
-//             ),
-//             mk_nil()
-//         )
-//     );
-
-//     code_t *code = compile(program, 3);
-
-//     run(code);
-
-//     return 0;
-
-// }
