@@ -4,15 +4,42 @@ typedef struct rt_parser {
 	char *error;
 } rt_parser_t;
 
+typedef val_t (*prefix_parse_f)(rt_parser_t *p);
+typedef val_t (*infix_parse_f)(rt_parser_t *p, val_t left);
+
+val_t parse_prefix_op(rt_parser_t*);
+val_t parse_paren_exp(rt_parser_t*);
+val_t parse_infix_op(rt_parser_t*, val_t);
 val_t parse_statements(rt_parser_t*, int);
-val_t parse_expression(rt_parser_t *p);
+val_t parse_expression(rt_parser_t*, int);
+
+prefix_parse_f prefix_parsers[] = {
+#define OP(_1, prefix_parse, _2, _3, _4) prefix_parse
+#include "operators.x"
+#undef OP
+};
+
+struct infix_op {
+	int precedence;
+	int right_associative;
+	infix_parse_f parser;
+} infix_ops[] = {
+#define OP(_1, _2, infix_prec, infix_rassoc, infix_parse) \
+	{ infix_prec, infix_rassoc, infix_parse }
+#include "operators.x"
+#undef OP
+};
 
 #define SKIP_NL() \
 	while (AT(TOK_NL)) NEXT()
 
-#define PARSE(var, rule) \
-	val_t var = parse_##rule(p); \
+#define PARSE_INTO(var, rule, ...) \
+	var = parse_##rule(p, ## __VA_ARGS__); \
 	if (p->error) return mk_nil()
+
+#define PARSE(var, rule, ...) \
+	val_t var; \
+	PARSE_INTO(var, rule, ## __VA_ARGS__)
 
 #define PARSE_STATEMENTS(var, term) \
 	val_t var = parse_statements(p, term); \
@@ -49,46 +76,81 @@ val_t parse_expression(rt_parser_t *p);
 #define MK2(type, arg1, arg2) \
 	mk_ast_##type(arg1, arg2)
 
-val_t parse_primary(rt_parser_t *p) {
-	if (AT(TOK_INT)) {
-		// TODO: overflow
-		// TODO: use correct int type
-		int val = 0;
-		for (int i = 0; i < p->lexer.tok_len; ++i) {
-			val = (val * 10) + (p->lexer.tok[i] - '0');
-		}
-		ACCEPT(TOK_INT);
-		return mk_int(val);
-	} else if (AT(TOK_IDENT)) {
-		int sym = rt_intern(TEXT(), TEXT_LEN());
-		ACCEPT(TOK_IDENT);
-		return mk_ident(sym);
-	} else if (AT(TOK_LPAREN)) {
-		ACCEPT(TOK_LPAREN);
-		PARSE(exp, expression);
-		ACCEPT(TOK_RPAREN);
-		return exp;
-	} else {
-		ERROR("invalid primary");
-	}
+// val_t parse_call(rt_parser_t *p) {
+// 	if (!AT(TOK_IDENT)) {
+// 		ERROR("expected: ident");
+// 	}
+// 	val_t ident = parse_primary(p);
+// 	ACCEPT(TOK_LPAREN);
+// 	ACCEPT(TOK_RPAREN);
+// 	return mk_ast_call(ident, mk_nil());
+// }
+
+val_t parse_ident(rt_parser_t *p) {
+	int sym = rt_intern(TEXT(), TEXT_LEN());
+	ACCEPT(TOK_IDENT);
+	return mk_ident(sym);
 }
 
-val_t parse_call(rt_parser_t *p) {
-	if (!AT(TOK_IDENT)) {
-		ERROR("expected: ident");
+val_t parse_int(rt_parser_t *p) {
+	// TODO: overflow
+	// TODO: use correct int type
+	int val = 0;
+	for (int i = 0; i < p->lexer.tok_len; ++i) {
+		val = (val * 10) + (p->lexer.tok[i] - '0');
 	}
-	val_t ident = parse_primary(p);
+	NEXT();
+	return mk_int(val);	
+}
+
+val_t parse_prefix_op(rt_parser_t *p) {
+	// TODO: this should consume the token,
+	// create the unary operator, then call back
+	// into parse_expression()
+	fprintf(stderr, "unary expressions not supported\n");
+	ERROR("tmp: unary");
+}
+
+val_t parse_paren_exp(rt_parser_t *p) {
 	ACCEPT(TOK_LPAREN);
+	PARSE(exp, expression, 0);
 	ACCEPT(TOK_RPAREN);
-	return mk_ast_call(ident, mk_nil());
+	return exp;
 }
 
-val_t parse_expression(rt_parser_t *p) {
+val_t parse_infix_op(rt_parser_t *p, val_t left) {
+	int optok = CURR();
+	int next_precedence = infix_ops[optok].precedence
+							- (infix_ops[optok].right_associative ? 1 : 0);
+	NEXT();
+	PARSE(right, expression, next_precedence);
+	return mk_ast_binop(optok, left, right);
+}
+
+val_t parse_expression(rt_parser_t *p, int precedence) {
+	val_t left;
+	
 	if (AT(TOK_IDENT)) {
-		return parse_call(p);
+		PARSE_INTO(left, ident);
+	} else if (AT(TOK_INT)) {
+		PARSE_INTO(left, int);
+	} else if ((CURR() < TOK_OP_MAX)
+				&& (prefix_parsers[CURR()] != NULL)) {
+		left = prefix_parsers[CURR()](p);
+		if (p->error) return mk_nil();
 	} else {
-		return parse_primary(p);
+		// TODO: better error message
+		ERROR("parse error");
 	}
+
+	while ((CURR() < TOK_OP_MAX)
+			&& (infix_ops[CURR()].parser != NULL)
+			&& (precedence < infix_ops[CURR()].precedence)) {
+		left = infix_ops[CURR()].parser(p, left);
+		if (p->error) return mk_nil();
+	}
+
+	return left;
 }
 
 val_t parse_block(rt_parser_t *p) {
@@ -101,10 +163,8 @@ val_t parse_block(rt_parser_t *p) {
 }
 
 val_t parse_while(rt_parser_t *p) {
-	printf("curr = %d\n", CURR());
 	ACCEPT(TOK_WHILE);
-	printf("got while\n");
-	PARSE(cond, expression);
+	PARSE(cond, expression, 0);
 	SKIP_NL();
 	PARSE(stmts, block);
 	return MK2(while, cond, stmts);
@@ -112,10 +172,9 @@ val_t parse_while(rt_parser_t *p) {
 
 val_t parse_statement(rt_parser_t *p, int terminator) {
 	if (AT(TOK_WHILE)) {
-		printf("parsing while...\n");
 		return parse_while(p);
 	} else {
-		PARSE(exp, expression);
+		PARSE(exp, expression, 0);
 		if (AT(TOK_NL)) {
 			SKIP_NL();
 		} else if (AT(terminator)) {
@@ -131,9 +190,7 @@ val_t parse_statements(rt_parser_t *p, int terminator) {
 	val_t head = mk_nil();
 	val_t tail = mk_nil();
 	while (!AT(terminator)) {
-		printf("parsing statement...\n");
 		PARSE_STATEMENT(stmt, terminator);
-		printf("statement parsed!\n");
 		val_t node = mk_ast_list(stmt, mk_nil());
 		if (nil_p(head)) {
 			head = tail = node;
@@ -152,8 +209,7 @@ val_t parse_module(rt_parser_t *p) {
 	return stmts;
 }
 
-//
-// Public interface
+/* Public Interface */
 
 void rt_parser_init(rt_parser_t *parser) {
 	parser->curr = rt_lexer_next(&parser->lexer);
@@ -165,10 +221,15 @@ val_t rt_parse_module(rt_parser_t *parser) {
 }
 
 #undef SKIP_NL
+#undef PARSE_INTO
 #undef PARSE
 #undef PARSE_STATEMENTS
+#undef PARSE_STATEMENT
 #undef ERROR
 #undef ACCEPT
 #undef NEXT
 #undef CURR
+#undef TEXT
+#undef TEXT_LEN
 #undef AT
+#undef MK2

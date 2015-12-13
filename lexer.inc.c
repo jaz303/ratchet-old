@@ -1,16 +1,20 @@
 enum {
-    TOK_IDENT = 1,
-    TOK_NL,
-    TOK_ASSIGN,
-    TOK_WHILE,
-    TOK_LT,
-    TOK_INT,
+    TOK_START = 1,
+
+#define OP(name, _1, _2, _3, _4) name
+#include "operators.x"
+#undef OP
+
+    TOK_OP_MAX,
+
+    TOK_RPAREN,
     TOK_LBRACE,
     TOK_RBRACE,
-    TOK_LPAREN,
-    TOK_RPAREN,
-    TOK_PLUS,
-
+    TOK_IDENT,
+    TOK_NL,
+    TOK_WHILE,
+    TOK_INT,
+    
     TOK_META = 1000,
     TOK_EOF,
     TOK_ERROR
@@ -98,6 +102,7 @@ int rt_lexer_next(rt_lexer_t *l) {
         case '}': NEXT(); EMIT(TOK_RBRACE);
         case '<': NEXT(); EMIT(TOK_LT);
         case '+': NEXT(); EMIT(TOK_PLUS);
+        case '-': NEXT(); EMIT(TOK_SUB);
         case ':':
             NEXT();
             if (CURR() == '=') {
