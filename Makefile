@@ -4,4 +4,7 @@ main: main.c
 clean:
 	rm -f main
 
-.PHONY: clean
+loc:
+	cat *.c *.x | wc -l
+
+.PHONY: clean loc
