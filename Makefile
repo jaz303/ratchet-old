@@ -1,5 +1,5 @@
 main: main.c
-	gcc -o $@ $<
+	gcc -Werror -o $@ $<
 
 clean:
 	rm -f main
