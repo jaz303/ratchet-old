@@ -35,7 +35,7 @@ typedef struct rt_lexer {
 #define CURR() (l->text[l->pos])
 #define NEXT() (l->pos++)
 #define LEN() (l->tok_len)
-#define TEXTEQ(str) rt_lexer_texteq(l, str)
+#define TEXTEQ(str) streql(str, l->tok, l->tok_len)
 #define ERROR(msg) \
     l->error = msg; \
     return TOK_ERROR
@@ -56,10 +56,6 @@ int ident_start_p(char c) {
 
 int ident_rest_p(char c) {
     return ident_start_p(c) || digit_p(c);
-}
-
-int rt_lexer_texteq(rt_lexer_t *l, const char *text) {
-    return streql(text, l->tok, l->tok_len);
 }
 
 void rt_lexer_init(rt_lexer_t *lexer, char *text) {
