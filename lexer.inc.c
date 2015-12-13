@@ -1,5 +1,5 @@
 enum {
-    TOK_START = 0,
+    __UNUSED_TOKEN__ = 0,
 
     #define OP(name, _1, _2, _3, _4) name
     #include "operators.x"
