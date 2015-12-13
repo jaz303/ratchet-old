@@ -49,7 +49,7 @@ typedef struct ast_binop {
 } ast_binop_t;
 
 #define ALLOC_AST(struct_type, tag) \
-    struct_type *node = malloc(sizeof(struct_type)); \
+    struct_type *node = (struct_type*)malloc(sizeof(struct_type)); \
     ((ast_node_t*)node)->type = tag; \
     val_t val = { .type = T_AST, .ast = (ast_node_t*) node }
 

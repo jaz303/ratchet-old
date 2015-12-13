@@ -26,7 +26,7 @@ typedef struct rt_lexer {
     int tok_start;
     int tok_len;
     char *tok;
-    char *error;
+    const char *error;
 } rt_lexer_t;
 
 #define MARK() l->tok_start = l->pos; l->tok = &(l->text[l->pos])

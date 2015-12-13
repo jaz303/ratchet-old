@@ -1,10 +1,10 @@
-main: main.c
-	gcc -Werror -o $@ $<
+main: main.cpp
+	g++ -Werror -o $@ $<
 
 clean:
 	rm -f main
 
 loc:
-	cat *.c *.x | wc -l
+	cat *.cpp *.x | wc -l
 
 .PHONY: clean loc

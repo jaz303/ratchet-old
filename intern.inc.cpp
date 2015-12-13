@@ -14,7 +14,7 @@ char *symt_chunk = 0;
 int symt_chunk_pos = 0;
 
 char *intern_alloc_chunk() {
-	char *chunk = malloc(symt_chunk_sz);
+	char *chunk = (char*)malloc(symt_chunk_sz);
 	if (!chunk) {
 		fprintf(stderr, "failed to allocated intern chunk\n");
 		exit(1);
@@ -24,7 +24,7 @@ char *intern_alloc_chunk() {
 
 char *intern_get_slice(int len) {
 	if (len > symt_chunk_sz) {
-		char *slice = malloc(len);
+		char *slice = (char*)malloc(len);
 		if (!slice) {
 			fprintf(stderr, "failed to allocated intern slice");
 			exit(1);
@@ -62,7 +62,7 @@ int rt_intern(const char *str, int len) {
 		}
 		curr = curr->next;
 	}
-	struct symt_entry *item = malloc(sizeof(struct symt_entry));
+	struct symt_entry *item = (struct symt_entry*)malloc(sizeof(struct symt_entry));
 	item->sym = intern_alloc_string(str, len);
 	item->val = symt_next++;
 	item->next = symt_root;

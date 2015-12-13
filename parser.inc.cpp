@@ -1,7 +1,7 @@
 typedef struct rt_parser {
 	rt_lexer_t lexer;
 	int curr;
-	char *error;
+	const char *error;
 } rt_parser_t;
 
 typedef val_t (*prefix_parse_f)(rt_parser_t *p);

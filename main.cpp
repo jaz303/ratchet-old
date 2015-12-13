@@ -4,12 +4,12 @@
 
 typedef struct ast_node ast_node_t;
 
-#include "util.inc.c"
-#include "val.inc.c"
-#include "ast.inc.c"
-#include "lexer.inc.c"
-#include "intern.inc.c"
-#include "parser.inc.c"
+#include "util.inc.cpp"
+#include "val.inc.cpp"
+#include "ast.inc.cpp"
+#include "lexer.inc.cpp"
+#include "intern.inc.cpp"
+#include "parser.inc.cpp"
 
 /**
  * Next steps
@@ -156,9 +156,9 @@ void compile_while(val_t node, code_t *co) {
 }
 
 code_t* compile(val_t program, int nlocals) {
-    code_t *co = malloc(sizeof(code_t));
-    co->constants = malloc(sizeof(val_t) * 128);
-    co->code = malloc(sizeof(inst_t) * 128);
+    code_t *co = (code_t*)malloc(sizeof(code_t));
+    co->constants = (val_t*)malloc(sizeof(val_t) * 128);
+    co->code = (inst_t*)malloc(sizeof(inst_t) * 128);
     co->pi = 0;
     co->ki = 0;
     co->reg = nlocals;
