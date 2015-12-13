@@ -1,9 +1,9 @@
 enum {
-    TOK_START = 1,
+    TOK_START = 0,
 
-#define OP(name, _1, _2, _3, _4) name
-#include "operators.x"
-#undef OP
+    #define OP(name, _1, _2, _3, _4) name
+    #include "operators.x"
+    #undef OP
 
     TOK_OP_MAX,
 

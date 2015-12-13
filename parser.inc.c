@@ -10,13 +10,15 @@ typedef val_t (*infix_parse_f)(rt_parser_t *p, val_t left);
 val_t parse_prefix_op(rt_parser_t*);
 val_t parse_paren_exp(rt_parser_t*);
 val_t parse_infix_op(rt_parser_t*, val_t);
+val_t parse_call(rt_parser_t*, val_t);
 val_t parse_statements(rt_parser_t*, int);
 val_t parse_expression(rt_parser_t*, int);
 
 prefix_parse_f prefix_parsers[] = {
-#define OP(_1, prefix_parse, _2, _3, _4) prefix_parse
-#include "operators.x"
-#undef OP
+	NULL,
+	#define OP(_1, prefix_parse, _2, _3, _4) prefix_parse
+	#include "operators.x"
+	#undef OP
 };
 
 struct infix_op {
@@ -24,10 +26,11 @@ struct infix_op {
 	int right_associative;
 	infix_parse_f parser;
 } infix_ops[] = {
-#define OP(_1, _2, infix_prec, infix_rassoc, infix_parse) \
-	{ infix_prec, infix_rassoc, infix_parse }
-#include "operators.x"
-#undef OP
+	{ -1, -1, NULL },
+	#define OP(_1, _2, infix_prec, infix_rassoc, infix_parse) \
+		{ infix_prec, infix_rassoc, infix_parse }
+	#include "operators.x"
+	#undef OP
 };
 
 #define SKIP_NL() \
@@ -76,15 +79,12 @@ struct infix_op {
 #define MK2(type, arg1, arg2) \
 	mk_ast_##type(arg1, arg2)
 
-// val_t parse_call(rt_parser_t *p) {
-// 	if (!AT(TOK_IDENT)) {
-// 		ERROR("expected: ident");
-// 	}
-// 	val_t ident = parse_primary(p);
-// 	ACCEPT(TOK_LPAREN);
-// 	ACCEPT(TOK_RPAREN);
-// 	return mk_ast_call(ident, mk_nil());
-// }
+val_t parse_call(rt_parser_t *p, val_t left) {
+	ACCEPT(TOK_LPAREN);
+	// TODO: parse argument list
+	ACCEPT(TOK_RPAREN);
+	return mk_ast_call(left, mk_nil());
+}
 
 val_t parse_ident(rt_parser_t *p) {
 	int sym = rt_intern(TEXT(), TEXT_LEN());
@@ -122,6 +122,9 @@ val_t parse_infix_op(rt_parser_t *p, val_t left) {
 	int optok = CURR();
 	int next_precedence = infix_ops[optok].precedence
 							- (infix_ops[optok].right_associative ? 1 : 0);
+	if (next_precedence < 0) {
+		ERROR("illegal precedence value; this is a bug.");
+	}
 	NEXT();
 	PARSE(right, expression, next_precedence);
 	return mk_ast_binop(optok, left, right);
@@ -129,7 +132,7 @@ val_t parse_infix_op(rt_parser_t *p, val_t left) {
 
 val_t parse_expression(rt_parser_t *p, int precedence) {
 	val_t left;
-	
+
 	if (AT(TOK_IDENT)) {
 		PARSE_INTO(left, ident);
 	} else if (AT(TOK_INT)) {
