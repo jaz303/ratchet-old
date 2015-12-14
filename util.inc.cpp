@@ -1,19 +1,17 @@
 char *readfile(const char *filename) {
 	char *source = NULL;
-	long size;
 	size_t read;
+	struct stat fi;
+	FILE *fp = NULL;
 
-	FILE *fp = fopen(filename, "r");
-	if (!fp) goto error;
-	if (fseek(fp, 0L, SEEK_END) != 0) goto error;
-	size = ftell(fp);
-	if (size == -1) goto error;
-	source = (char*)malloc(sizeof(char) * size);
+	if (stat(filename, &fi) == -1) goto error;
+	source = (char*)malloc(sizeof(char) * (fi.st_size + 1));
 	if (source == NULL) goto error;
-	if (fseek(fp, 0L, SEEK_SET) != 0) goto error;
-	read = fread(source, sizeof(char), size, fp);
-	if (read != size) goto error;
-	source[size] = '\0';
+	fp = fopen(filename, "r");
+	if (!fp) goto error;
+	read = fread(source, sizeof(char), fi.st_size, fp);
+	if (read != fi.st_size) goto error;
+	source[fi.st_size] = '\0';
 	goto ok;
 
 error:
