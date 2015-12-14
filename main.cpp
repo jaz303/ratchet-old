@@ -270,11 +270,9 @@ int main(int argc, char *argv[]) {
 
     val_t mod = rt_parse_module(&parser);
 
-    printf("node type: %d\n", mod.ast->type);
-
     free(source);
 
-    if (nil_p(mod)) {
+    if (parser.error) {
         fprintf(stderr, "parse error: %s\n", parser.error);
         return 1;
     }
