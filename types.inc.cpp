@@ -1,13 +1,7 @@
 // AST node type tags
 // The actual AST structs are declared in ast.inc.cpp
 enum {
-    AST_LIST        = 0x01,
-    AST_PRINT       = 0x02,
-    AST_IDENT       = 0x03,
-    AST_CALL        = 0x04,
-    AST_WHILE       = 0x05,
-    AST_BIN_OP      = 0x06,
-    AST_FN_DEF      = 0x07
+    AST_BIN_OP, AST_CALL, AST_FN_DEF, AST_IDENT, AST_LIST, AST_PRINT, AST_WHILE
 };
 
 enum opcode_t {
