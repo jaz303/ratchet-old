@@ -161,7 +161,7 @@ void run(code_t *co) {
 
     while (1) {
         inst_t op = co->code[ip++];
-        printf("op: 0x%x\n", op);
+        // printf("op: 0x%x\n", op);
         switch (op & 0xfc000000) {
             case OP_PRINT:
                 {
