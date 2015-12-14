@@ -14,6 +14,7 @@ enum {
     TOK_NL,
     TOK_WHILE,
     TOK_INT,
+    TOK_COMMA,
 
     TOK_META = 1000,
     TOK_EOF,
@@ -23,6 +24,8 @@ enum {
 typedef struct rt_lexer {
     char *text;
     size_t pos;
+    int line;
+    int column;
     int tok_start;
     int tok_len;
     char *tok;
@@ -33,7 +36,7 @@ typedef struct rt_lexer {
 #define END() l->tok_len = l->pos - l->tok_start
 #define EMIT(tok) return tok
 #define CURR() (l->text[l->pos])
-#define NEXT() (l->pos++)
+#define NEXT() lexer_next(l)
 #define LEN() (l->tok_len)
 #define TEXTEQ(str) streql(str, l->tok, l->tok_len)
 #define ERROR(msg) \
@@ -58,9 +61,22 @@ int ident_rest_p(char c) {
     return ident_start_p(c) || digit_p(c);
 }
 
+void lexer_next(rt_lexer_t *l) {
+    // TODO: handle \r\n
+    if (l->text[l->pos] == '\n') {
+        l->line++;
+        l->column = 1;
+    } else {
+        l->column++;
+    }
+    l->pos++;
+}
+
 void rt_lexer_init(rt_lexer_t *lexer, char *text) {
     lexer->text = text;
     lexer->pos = 0;
+    lexer->line = 1;
+    lexer->column = 1;
     lexer->tok_start = 0;
     lexer->tok_len = 0;
     lexer->tok = NULL;
@@ -70,6 +86,8 @@ void rt_lexer_init(rt_lexer_t *lexer, char *text) {
 void rt_lexer_clone(rt_lexer_t *d, const rt_lexer_t *s) {
     d->text = s->text;
     d->pos = s->pos;
+    d->line = s->line;
+    d->column = s->column;
     d->tok_start = s->tok_start;
     d->tok_len = s->tok_len;
     d->tok = s->tok;
@@ -84,7 +102,7 @@ int rt_lexer_next(rt_lexer_t *l) {
         l->pos++;
     }
     switch (CURR()) {
-        case 0: EMIT(TOK_EOF);
+        case '\0': EMIT(TOK_EOF);
         case '\r':
             NEXT();
             if (CURR() == '\n') {
@@ -101,6 +119,7 @@ int rt_lexer_next(rt_lexer_t *l) {
         case '-': NEXT(); EMIT(TOK_SUB);
         case '*': NEXT(); EMIT(TOK_STAR);
         case '/': NEXT(); EMIT(TOK_SLASH);
+        case ',': NEXT(); EMIT(TOK_COMMA);
         case ':':
             NEXT();
             if (CURR() == '=') {

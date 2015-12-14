@@ -4,6 +4,19 @@ typedef struct rt_parser {
 	const char *error;
 } rt_parser_t;
 
+int pdebug_depth = 0;
+void pdebug_print(const char *msg) {
+	if (msg[0] == '<') pdebug_depth--;
+	for (int i = 0; i < pdebug_depth; ++i) {
+		fputs("  ", stderr);
+	}
+	fputs(msg, stderr);
+	fputc('\n', stderr);
+	if (msg[0] == '>') pdebug_depth++;
+}
+
+#define PDEBUG(msg) pdebug_print(msg)
+
 typedef val_t (*prefix_parse_f)(rt_parser_t *p);
 typedef val_t (*infix_parse_f)(rt_parser_t *p, val_t left);
 
@@ -35,7 +48,7 @@ struct infix_op {
 };
 
 #define SKIP_NL() \
-	while (AT(TOK_NL)) NEXT()
+	while (AT(TOK_NL)) { NEXT(); }
 
 #define PARSE_INTO(var, rule, ...) \
 	var = parse_##rule(p, ## __VA_ARGS__); \
@@ -54,7 +67,6 @@ struct infix_op {
 	if (p->error) return mk_nil()
 
 #define ERROR(msg) \
-	printf("error: %s\n", msg); \
 	p->error = msg; \
 	return mk_nil()
 
@@ -80,16 +92,46 @@ struct infix_op {
 #define MK2(type, arg1, arg2) \
 	mk_ast_##type(arg1, arg2)
 
+val_t parse_expression_list(rt_parser_t *p) {
+	PDEBUG("> expression list");
+	val_t head = mk_nil(), tail = mk_nil();
+	while (1) {
+		PARSE(exp, expression, 0);
+		val_t node = mk_ast_list(exp, mk_nil());
+		if (nil_p(head)) {
+			head = tail = node;
+		} else {
+			((ast_list_t*)tail.ast)->next = node;
+			tail = node;
+		}
+		if (AT(TOK_COMMA)) {
+			NEXT();
+		} else {
+			break;
+		}
+	}
+	PDEBUG("< expression list");
+	return head;
+}
+
 val_t parse_call(rt_parser_t *p, val_t left) {
+	PDEBUG("> call");
 	ACCEPT(TOK_LPAREN);
-	// TODO: parse argument list
+	val_t args;
+	if (AT(TOK_RPAREN)) {
+		args = mk_nil();
+	} else {
+		PARSE_INTO(args, expression_list);
+	}
 	ACCEPT(TOK_RPAREN);
-	return mk_ast_call(left, mk_nil());
+	PDEBUG("< call");
+	return mk_ast_call(left, args);
 }
 
 val_t parse_ident(rt_parser_t *p) {
 	int sym = rt_intern(TEXT(), TEXT_LEN());
 	ACCEPT(TOK_IDENT);
+	PDEBUG("- ident");
 	return mk_ident(sym);
 }
 
@@ -101,6 +143,7 @@ val_t parse_int(rt_parser_t *p) {
 		val = (val * 10) + (p->lexer.tok[i] - '0');
 	}
 	NEXT();
+	PDEBUG("- int");
 	return mk_int(val);
 }
 
@@ -113,13 +156,16 @@ val_t parse_prefix_op(rt_parser_t *p) {
 }
 
 val_t parse_paren_exp(rt_parser_t *p) {
+	PDEBUG("> paren exp");
 	ACCEPT(TOK_LPAREN);
 	PARSE(exp, expression, 0);
 	ACCEPT(TOK_RPAREN);
+	PDEBUG("< paren exp");
 	return exp;
 }
 
 val_t parse_infix_op(rt_parser_t *p, val_t left) {
+	PDEBUG("> infix op");
 	int optok = CURR();
 	int next_precedence = infix_ops[optok].precedence
 							- (infix_ops[optok].right_associative ? 1 : 0);
@@ -128,12 +174,14 @@ val_t parse_infix_op(rt_parser_t *p, val_t left) {
 	}
 	NEXT();
 	PARSE(right, expression, next_precedence);
+	PDEBUG("< infix op");
 	return mk_ast_binop(infix_ops[optok].op, left, right);
 }
 
 val_t parse_expression(rt_parser_t *p, int precedence) {
-	val_t left;
+	PDEBUG("> expression");
 
+	val_t left;
 	if (AT(TOK_IDENT)) {
 		PARSE_INTO(left, ident);
 	} else if (AT(TOK_INT)) {
@@ -154,31 +202,38 @@ val_t parse_expression(rt_parser_t *p, int precedence) {
 		if (p->error) return mk_nil();
 	}
 
+	PDEBUG("< expression");
 	return left;
 }
 
 val_t parse_block(rt_parser_t *p) {
+	PDEBUG("> block");
 	ACCEPT(TOK_LBRACE);
 	SKIP_NL();
 	PARSE_STATEMENTS(stmts, TOK_RBRACE);
 	ACCEPT(TOK_RBRACE);
 	SKIP_NL();
+	PDEBUG("< block");
 	return stmts;
 }
 
 val_t parse_while(rt_parser_t *p) {
+	PDEBUG("> while");
 	ACCEPT(TOK_WHILE);
 	PARSE(cond, expression, 0);
 	SKIP_NL();
 	PARSE(stmts, block);
+	PDEBUG("< while");
 	return MK2(while, cond, stmts);
 }
 
 val_t parse_statement(rt_parser_t *p, int terminator) {
+	PDEBUG("> statement");
+	val_t stmt;
 	if (AT(TOK_WHILE)) {
-		return parse_while(p);
+		PARSE_INTO(stmt, while);
 	} else {
-		PARSE(exp, expression, 0);
+		PARSE_INTO(stmt, expression, 0);
 		if (AT(TOK_NL)) {
 			SKIP_NL();
 		} else if (AT(terminator)) {
@@ -186,13 +241,14 @@ val_t parse_statement(rt_parser_t *p, int terminator) {
 		} else {
 			ERROR("expected: newline or terminator");
 		}
-		return exp;
 	}
+	PDEBUG("< statement");
+	return stmt;
 }
 
 val_t parse_statements(rt_parser_t *p, int terminator) {
-	val_t head = mk_nil();
-	val_t tail = mk_nil();
+	PDEBUG("> statements");
+	val_t head = mk_nil(), tail = mk_nil();
 	while (!AT(terminator)) {
 		PARSE_STATEMENT(stmt, terminator);
 		val_t node = mk_ast_list(stmt, mk_nil());
@@ -203,13 +259,16 @@ val_t parse_statements(rt_parser_t *p, int terminator) {
 			tail = node;
 		}
 	}
+	PDEBUG("< statements");
 	return head;
 }
 
 val_t parse_module(rt_parser_t *p) {
+	PDEBUG("> module");
 	SKIP_NL();
 	PARSE_STATEMENTS(stmts, TOK_EOF);
 	ACCEPT(TOK_EOF);
+	PDEBUG("< module");
 	return stmts;
 }
 
