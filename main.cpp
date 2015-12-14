@@ -61,6 +61,9 @@ void compile_statements(val_t stmt, code_t *code) {
             case AST_WHILE:
                 compile_while(subj, code);
                 break;
+            case AST_FN_DEF:
+                printf("skipping compilation of function def\n");
+                break;
             default:
                 compile_exp(subj, code);
                 break;

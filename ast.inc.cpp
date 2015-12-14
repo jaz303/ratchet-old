@@ -21,6 +21,13 @@ struct ast_list {
     val_t next;
 };
 
+typedef struct ast_fn_def {
+    ast_node_t base;
+    int name;
+    val_t params;
+    val_t body;
+} ast_fn_def_t;
+
 typedef struct ast_while {
     ast_node_t base;
     val_t cond;
@@ -70,6 +77,14 @@ val_t mk_ast_binop(operator_t op, val_t l, val_t r) {
 val_t mk_ast_while(val_t cond, val_t body) {
     ALLOC_AST(ast_while_t, AST_WHILE);
     node->cond = cond;
+    node->body = body;
+    return val;
+}
+
+val_t mk_ast_fn_def(int name, val_t params, val_t body) {
+    ALLOC_AST(ast_fn_def_t, AST_FN_DEF);
+    node->name = name;
+    node->params = params;
     node->body = body;
     return val;
 }

@@ -129,7 +129,10 @@ val_t parse_call(rt_parser_t *p, val_t left) {
 }
 
 val_t parse_ident(rt_parser_t *p) {
-	int sym = rt_intern(TEXT(), TEXT_LEN());
+	int sym;
+	if (AT(TOK_IDENT)) {
+		sym = rt_intern(TEXT(), TEXT_LEN());
+	}
 	ACCEPT(TOK_IDENT);
 	PDEBUG("- ident");
 	return mk_ident(sym);
@@ -227,11 +230,61 @@ val_t parse_while(rt_parser_t *p) {
 	return MK2(while, cond, stmts);
 }
 
+val_t parse_if(rt_parser_t *p) {
+	PDEBUG("> if");
+	ACCEPT(TOK_IF);
+	PARSE(cond, expression, 0);
+	SKIP_NL();
+	PARSE(stmts, block);
+	PDEBUG("< if");
+	return MK2(while, cond, stmts);
+}
+
+val_t parse_fn_def(rt_parser_t *p) {
+	PDEBUG("> fn-def");
+	ACCEPT(TOK_DEF);
+	if (!AT(TOK_IDENT)) {
+		ERROR("expected: identifier");
+	}
+	int name = rt_intern(p->lexer.tok, p->lexer.tok_len);
+	NEXT();
+	val_t params_head = mk_nil(), params_tail = mk_nil();
+	if (AT(TOK_LPAREN)) {
+		NEXT();
+		if (!AT(TOK_RPAREN)) {
+			while (1) {
+				PARSE(param_name, ident);
+				val_t node = mk_ast_list(param_name, mk_nil());
+				if (nil_p(params_head)) {
+					params_head = params_tail = node;
+				} else {
+					((ast_list_t*)params_tail.ast)->next = node;
+					params_tail = node;
+				}
+				if (AT(TOK_COMMA)) {
+					NEXT();
+				} else {
+					break;
+				}
+			}
+		}
+		ACCEPT(TOK_RPAREN);
+	}
+	SKIP_NL();
+	PARSE(body, block);
+	PDEBUG("< fn-def");
+	return mk_ast_fn_def(name, params_head, body);
+}
+
 val_t parse_statement(rt_parser_t *p, int terminator) {
 	PDEBUG("> statement");
 	val_t stmt;
 	if (AT(TOK_WHILE)) {
 		PARSE_INTO(stmt, while);
+	} else if (AT(TOK_IF)) {
+		PARSE_INTO(stmt, if);
+	} else if (AT(TOK_DEF)) {
+		PARSE_INTO(stmt, fn_def);
 	} else {
 		PARSE_INTO(stmt, expression, 0);
 		if (AT(TOK_NL)) {

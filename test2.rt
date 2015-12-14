@@ -1,6 +1,28 @@
+
+def foo {
+
+}
+
+def bar() {
+
+}
+
+def baz(a) {
+
+}
+
+def bleem( a,  b, c,  d ) {
+
+}
+
+
+
+while 0 {
+	p1()
+	p2()
+}
+
 while 1 {
 	p1((1 + 2) * 3 + 12)
 	p2(5 * 10 + 2)
 }
-
-

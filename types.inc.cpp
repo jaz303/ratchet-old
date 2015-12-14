@@ -7,6 +7,7 @@ enum {
     AST_CALL        = 0x04,
     AST_WHILE       = 0x05,
     AST_BIN_OP      = 0x06,
+    AST_FN_DEF      = 0x07
 };
 
 enum opcode_t {
