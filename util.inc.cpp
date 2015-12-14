@@ -2,18 +2,18 @@ char *readfile(const char *filename) {
 	char *source = NULL;
 	long size;
 	size_t read;
-	
+
 	FILE *fp = fopen(filename, "r");
 	if (!fp) goto error;
 	if (fseek(fp, 0L, SEEK_END) != 0) goto error;
 	size = ftell(fp);
 	if (size == -1) goto error;
-	source = (char*)malloc(sizeof(char) * (size + 1));
+	source = (char*)malloc(sizeof(char) * size);
 	if (source == NULL) goto error;
 	if (fseek(fp, 0L, SEEK_SET) != 0) goto error;
 	read = fread(source, sizeof(char), size, fp);
 	if (read != size) goto error;
-	source[read+1] = '\0';
+	source[size] = '\0';
 	goto ok;
 
 error:
