@@ -5,6 +5,7 @@
 typedef struct ast_node ast_node_t;
 
 #include "util.inc.cpp"
+#include "types.inc.cpp"
 #include "val.inc.cpp"
 #include "ast.inc.cpp"
 #include "lexer.inc.cpp"
@@ -17,19 +18,6 @@ typedef struct ast_node ast_node_t;
  * 1. decorate AST
  * 2. replace naive register allocation with Sethi-Ullman
  */
-
-enum {
-    OP_PRINT    = (1 << 26),
-    OP_HALT     = (2 << 26),
-    OP_ADD      = (3 << 26),
-    OP_SUB      = (4 << 26),
-    OP_LOADK    = (5 << 26),
-    OP_COPY     = (6 << 26),
-    OP_CALL     = (7 << 26),
-    OP_LT       = (8 << 26),
-    OP_JMP      = (9 << 26),
-    OP_JMPF     = (10 << 26)
-};
 
 typedef uint32_t inst_t;
 
@@ -93,24 +81,16 @@ int compile_exp(val_t val, code_t *co) {
         co->code[co->pi++] = OP_LOADK | (dst << 16) | constant;
         return dst;
     } else if (val.type == T_AST) {
-        if (val.ast->type & AST_BINOP_MASK) {
+        if (val.ast->type == AST_BIN_OP) {
             ast_binop_t *op = (ast_binop_t*)val.ast;
-            if (op->base.type == AST_ADD
-                || op->base.type == AST_SUB
-                || op->base.type == AST_LT) {
+            if (op->op & OPERATOR_SIMPLE_BINOP_MASK) {
                 int lreg = compile_exp(op->l, co);
                 int rreg = compile_exp(op->r, co);
                 int oreg = co->reg++;
-                int opcodes[] = {
-                    0,
-                    OP_ADD,
-                    OP_SUB,
-                    OP_LT
-                };
-                int opcode = opcodes[op->base.type & ~AST_BINOP_MASK];
+                opcode_t opcode = rt_simple_binop_opcodes[op->op & ~OPERATOR_SIMPLE_BINOP_MASK];
                 co->code[co->pi++] = opcode | (oreg << 16) | (lreg << 8) | rreg;
                 return oreg;
-            } else if (op->base.type == AST_ASSIGN) {
+            } else if (op->op == OPERATOR_ASSIGN) {
                 int dst = op->l.ival;
                 int src = compile_exp(op->r, co);
                 co->code[co->pi++] = OP_COPY | (dst << 16) | src;
@@ -251,10 +231,10 @@ void run(code_t *co) {
                 break;
             case OP_HALT:
                 {
-                    printf("execution terminated\n");    
+                    printf("execution terminated\n");
                 }
                 return;
-        } 
+        }
     }
 }
 

@@ -16,7 +16,7 @@ val_t parse_expression(rt_parser_t*, int);
 
 prefix_parse_f prefix_parsers[] = {
 	NULL,
-	#define OP(_1, prefix_parse, _2, _3, _4) prefix_parse
+	#define OP(_1, prefix_parse, _2, _3, _4, _5) prefix_parse
 	#include "operators.x"
 	#undef OP
 };
@@ -25,10 +25,11 @@ struct infix_op {
 	int precedence;
 	int right_associative;
 	infix_parse_f parser;
+	operator_t op;
 } infix_ops[] = {
-	{ -1, -1, NULL },
-	#define OP(_1, _2, infix_prec, infix_rassoc, infix_parse) \
-		{ infix_prec, infix_rassoc, infix_parse }
+	{ -1, -1, NULL, OPERATOR_NONE },
+	#define OP(_1, _2, infix_prec, infix_rassoc, infix_parse, infix_operator) \
+		{ infix_prec, infix_rassoc, infix_parse, infix_operator }
 	#include "operators.x"
 	#undef OP
 };
@@ -127,7 +128,7 @@ val_t parse_infix_op(rt_parser_t *p, val_t left) {
 	}
 	NEXT();
 	PARSE(right, expression, next_precedence);
-	return mk_ast_binop(optok, left, right);
+	return mk_ast_binop(infix_ops[optok].op, left, right);
 }
 
 val_t parse_expression(rt_parser_t *p, int precedence) {

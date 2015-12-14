@@ -1,18 +1,3 @@
-enum {
-    AST_LIST        = 0x01,
-    AST_PRINT       = 0x02,
-    AST_IDENT       = 0x03,
-    AST_CALL        = 0x04,
-    AST_WHILE       = 0x05,
-
-    AST_ADD         = 0x81,
-    AST_SUB         = 0x82,
-    AST_LT          = 0x83,
-    AST_ASSIGN      = 0x84
-};
-
-const int AST_BINOP_MASK = 0x80;
-
 struct ast_node {
     int type;
 };
@@ -44,6 +29,7 @@ typedef struct ast_while {
 
 typedef struct ast_binop {
     ast_node_t base;
+    operator_t op;
     val_t l;
     val_t r;
 } ast_binop_t;
@@ -73,8 +59,9 @@ val_t mk_ast_print(val_t exp) {
     return val;
 }
 
-val_t mk_ast_binop(int type, val_t l, val_t r) {
-    ALLOC_AST(ast_binop_t, type);
+val_t mk_ast_binop(operator_t op, val_t l, val_t r) {
+    ALLOC_AST(ast_binop_t, AST_BIN_OP);
+    node->op = op;
     node->l = l;
     node->r = r;
     return val;
