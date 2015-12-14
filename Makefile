@@ -1,4 +1,4 @@
-main: main.cpp
+main: main.cpp *.inc.cpp *.x
 	g++ -Werror -o $@ $<
 
 clean:
