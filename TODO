@@ -1,27 +1,36 @@
-[ ] parser for current language subset
-[ ] if statements
-[ ] add function definitions
-[ ] tagged value repr via NaN-packing
-[ ] string data type
-[ ] proper compiler
-	- register allocator
-	- symbol tables
-	- module/module instance concept
+[ ] if-statement parsing
+[ ] function definitions - default parameter parsing
+[ ] string data type, parsing
+[ ] unary operator representation and parsing (!, -)
+[ ] add comparison operators: =, <, >, <=, >= (parsing, precedence)
+
+[ ] proper compiler/VM
+	- symbol table, scope resolution
+	- jump table for interpreter (macro-defined)
+
+[ ] ensure all operations on val_t are encapsulated
 
 ---
 
 - GC
+- closures
+- tasks (yield, spawn)
 - arrays
 - dictionaries
+- module system
+
+
+- object system
+	- host-defined objects only for now
+	- redefine function calls in terms of self sends
+- tagged value repr via NaN-packing
 - classes
 - operator overloading
-- tasks (yield, spawn)
 - XML parsing; data language
 - channels
 - threadpool
-- module system
 - blocks
-- closures
+
 - immutable datastructures
 - UTF8
 - stdlib
