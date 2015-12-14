@@ -50,7 +50,7 @@ struct infix_op {
 
 #define PARSE_STATEMENT(var, term) \
 	val_t var = parse_statement(p, term); \
-	if (p->error) return mk_nil()	
+	if (p->error) return mk_nil()
 
 #define ERROR(msg) \
 	printf("error: %s\n", msg); \
@@ -100,7 +100,7 @@ val_t parse_int(rt_parser_t *p) {
 		val = (val * 10) + (p->lexer.tok[i] - '0');
 	}
 	NEXT();
-	return mk_int(val);	
+	return mk_int(val);
 }
 
 val_t parse_prefix_op(rt_parser_t *p) {
