@@ -181,6 +181,22 @@ void run(code_t *co) {
                     reg[rd].ival = reg[r2].ival - reg[r3].ival;
                 }
                 break;
+            case OP_MUL:
+                {
+                    int rd = (op >> 16) & 0xFF;
+                    int r2 = (op >>  8) & 0xFF;
+                    int r3 = (op >>  0) & 0xFF;
+                    reg[rd].ival = reg[r2].ival * reg[r3].ival;
+                }
+                break;
+            case OP_DIV:
+                {
+                    int rd = (op >> 16) & 0xFF;
+                    int r2 = (op >>  8) & 0xFF;
+                    int r3 = (op >>  0) & 0xFF;
+                    reg[rd].ival = reg[r2].ival / reg[r3].ival;
+                }
+                break;
             case OP_LOADK:
                 {
                     int r = (op >> 16) & 0xFF;
