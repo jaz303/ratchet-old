@@ -14,7 +14,7 @@ enum {
     TOK_NL,
     TOK_WHILE,
     TOK_INT,
-    
+
     TOK_META = 1000,
     TOK_EOF,
     TOK_ERROR
@@ -99,6 +99,8 @@ int rt_lexer_next(rt_lexer_t *l) {
         case '<': NEXT(); EMIT(TOK_LT);
         case '+': NEXT(); EMIT(TOK_PLUS);
         case '-': NEXT(); EMIT(TOK_SUB);
+        case '*': NEXT(); EMIT(TOK_STAR);
+        case '/': NEXT(); EMIT(TOK_SLASH);
         case ':':
             NEXT();
             if (CURR() == '=') {
