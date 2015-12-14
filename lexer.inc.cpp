@@ -13,6 +13,8 @@ enum {
     TOK_IDENT,
     TOK_NL,
     TOK_WHILE,
+    TOK_IF,
+    TOK_DEF,
     TOK_INT,
     TOK_COMMA,
 
@@ -135,11 +137,10 @@ int rt_lexer_next(rt_lexer_t *l) {
                     NEXT();
                 }
                 END();
-                if (TEXTEQ("while")) {
-                    return TOK_WHILE;
-                } else {
-                    return TOK_IDENT;
-                }
+                if (TEXTEQ("while"))    return TOK_WHILE;
+                if (TEXTEQ("if"))       return TOK_IF;
+                if (TEXTEQ("def"))      return TOK_DEF;
+                return TOK_IDENT;
             } else if (digit_p(CURR())) {
                 MARK(); NEXT();
                 while (digit_p(CURR())) {
