@@ -30,16 +30,12 @@ typedef struct {
 } code_t;
 
 val_t p1(val_t *args, int nargs) {
-    printf("Hello from P1!\n");
-    // printf("mul: %d %d %d\n", args[0].ival, args[1].ival, args[2].ival);
-    // return mk_int(args[0].ival * args[1].ival * args[2].ival);
+    printf("Hello from P1: %d\n", args[0].ival);
     return mk_nil();
 }
 
 val_t p2(val_t *args, int nargs) {
-    printf("Hello from P2!\n");
-    // printf("mul: %d %d %d\n", args[0].ival, args[1].ival, args[2].ival);
-    // return mk_int(args[0].ival * args[1].ival * args[2].ival);
+    printf("Hello from P2: %d\n", args[0].ival);
     return mk_nil();
 }
 
