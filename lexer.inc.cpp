@@ -7,11 +7,8 @@ enum {
 
     TOK_OP_MAX,
 
-    TOK_RPAREN,
-    TOK_LBRACE,
-    TOK_RBRACE,
+    TOK_INT,
     TOK_IDENT,
-    TOK_NL,
 
     TOK_WHILE,
     TOK_IF,
@@ -19,7 +16,10 @@ enum {
     TOK_TRUE,
     TOK_FALSE,
 
-    TOK_INT,
+    TOK_RPAREN,
+    TOK_LBRACE,
+    TOK_RBRACE,
+    TOK_NL,
     TOK_COMMA,
 
     TOK_META = 1000,
