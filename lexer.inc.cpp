@@ -1,7 +1,7 @@
 enum {
     __UNUSED_TOKEN__ = 0,
 
-    #define OP(name, _1, _2, _3, _4, _5) name
+    #define OP(name, _1, _2, _3, _4, _5, _6) name
     #include "operators.x"
     #undef OP
 

@@ -27,9 +27,13 @@ val_t parse_call(rt_parser_t*, val_t);
 val_t parse_statements(rt_parser_t*, int);
 val_t parse_expression(rt_parser_t*, int);
 
-prefix_parse_f prefix_parsers[] = {
-	NULL,
-	#define OP(_1, prefix_parse, _2, _3, _4, _5) prefix_parse
+struct prefix_op {
+	prefix_parse_f parser;
+	operator_t op;
+} prefix_ops[] = {
+	{ NULL, OPERATOR_NONE },
+	#define OP(_1, prefix_parse, prefix_operator, _2, _3, _4, _5) \
+		{ prefix_parse, prefix_operator }
 	#include "operators.x"
 	#undef OP
 };
@@ -41,7 +45,7 @@ struct infix_op {
 	operator_t op;
 } infix_ops[] = {
 	{ -1, -1, NULL, OPERATOR_NONE },
-	#define OP(_1, _2, infix_prec, infix_rassoc, infix_parse, infix_operator) \
+	#define OP(_1, _2, _3, infix_prec, infix_rassoc, infix_parse, infix_operator) \
 		{ infix_prec, infix_rassoc, infix_parse, infix_operator }
 	#include "operators.x"
 	#undef OP
@@ -151,11 +155,12 @@ val_t parse_int(rt_parser_t *p) {
 }
 
 val_t parse_prefix_op(rt_parser_t *p) {
-	// TODO: this should consume the token,
-	// create the unary operator, then call back
-	// into parse_expression()
-	fprintf(stderr, "unary expressions not supported\n");
-	ERROR("tmp: unary");
+	PDEBUG("> prefix op");
+	int optok = CURR();
+	NEXT();
+	PARSE(exp, expression, 0);
+	PDEBUG("< prefix op");
+	return mk_ast_unop(prefix_ops[optok].op, exp);
 }
 
 val_t parse_paren_exp(rt_parser_t *p) {
@@ -196,8 +201,8 @@ val_t parse_expression(rt_parser_t *p, int precedence) {
 	} else if (AT(TOK_INT)) {
 		PARSE_INTO(left, int);
 	} else if ((CURR() < TOK_OP_MAX)
-				&& (prefix_parsers[CURR()] != NULL)) {
-		left = prefix_parsers[CURR()](p);
+				&& (prefix_ops[CURR()].parser != NULL)) {
+		left = prefix_ops[CURR()].parser(p);
 		if (p->error) return mk_nil();
 	} else {
 		// TODO: better error message

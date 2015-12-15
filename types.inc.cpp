@@ -22,6 +22,7 @@ enum opcode_t {
 // Mask that identifies an operator_t as a simple binary operator;
 // that is, the operator maps directly to a VM opcode.
 const int OPERATOR_SIMPLE_BINOP_MASK = 0x80;
+const int OPERATOR_SIMPLE_UNOP_MASK = 0x40;
 
 enum operator_t {
     OPERATOR_NONE       = 0x00,
@@ -32,7 +33,11 @@ enum operator_t {
     OPERATOR_SUB        = OPERATOR_SIMPLE_BINOP_MASK | 1,
     OPERATOR_MUL        = OPERATOR_SIMPLE_BINOP_MASK | 2,
     OPERATOR_DIV        = OPERATOR_SIMPLE_BINOP_MASK | 3,
-    OPERATOR_LT         = OPERATOR_SIMPLE_BINOP_MASK | 4
+    OPERATOR_LT         = OPERATOR_SIMPLE_BINOP_MASK | 4,
+
+    OPERATOR_UNMINUS    = OPERATOR_SIMPLE_UNOP_MASK | 0,
+    OPERATOR_UNPLUS     = OPERATOR_SIMPLE_UNOP_MASK | 1,
+    OPERATOR_NEGATE     = OPERATOR_SIMPLE_UNOP_MASK | 2
 };
 
 // Must be in the same order as the corresponding operator_ts, above.
@@ -42,4 +47,8 @@ const opcode_t rt_simple_binop_opcodes[] = {
     OP_MUL,
     OP_DIV,
     OP_LT
+};
+
+const opcode_t rt_simple_unop_opcodes[] = {
+    
 };
