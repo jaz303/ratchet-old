@@ -172,7 +172,7 @@ int rt_lexer_next(rt_lexer_t *l) {
                 if (TEXTEQ("def"))      return TOK_DEF;
                 if (TEXTEQ("true"))     return TOK_TRUE;
                 if (TEXTEQ("false"))    return TOK_FALSE;
-                return TOK_IDENT;
+                EMIT(TOK_IDENT);
             } else if (digit_p(CURR())) {
                 MARK(); NEXT();
                 while (digit_p(CURR())) {
