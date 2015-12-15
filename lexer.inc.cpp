@@ -22,7 +22,7 @@ enum {
     TOK_NL,
     TOK_COMMA,
 
-    TOK_META = 1000,
+    TOK_TERMINAL = 1000,
     TOK_EOF,
     TOK_ERROR
 };
