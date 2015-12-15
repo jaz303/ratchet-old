@@ -34,6 +34,12 @@ typedef struct ast_while {
     val_t body;
 } ast_while_t;
 
+typedef struct ast_unop {
+    ast_node_t base;
+    operator_t op;
+    val_t exp;
+} ast_unop_t;
+
 typedef struct ast_binop {
     ast_node_t base;
     operator_t op;
@@ -62,6 +68,13 @@ val_t mk_ast_call(val_t callee, val_t args) {
 
 val_t mk_ast_print(val_t exp) {
     ALLOC_AST(ast_print_t, AST_PRINT);
+    node->exp = exp;
+    return val;
+}
+
+val_t mk_ast_unop(operator_t op, val_t exp) {
+    ALLOC_AST(ast_unop_t, AST_UN_OP);
+    node->op = op;
     node->exp = exp;
     return val;
 }
