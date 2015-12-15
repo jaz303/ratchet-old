@@ -26,6 +26,16 @@ val_t mk_nil() {
     return out;
 }
 
+val_t mk_true() {
+    val_t out = { .type = T_TRUE };
+    return out;
+}
+
+val_t mk_false() {
+    val_t out = { .type = T_FALSE };
+    return out;
+}
+
 val_t mk_int(int val) {
     val_t out;
     out.type = T_INT;

@@ -187,6 +187,12 @@ val_t parse_expression(rt_parser_t *p, int precedence) {
 	val_t left;
 	if (AT(TOK_IDENT)) {
 		PARSE_INTO(left, ident);
+	} else if (AT(TOK_TRUE)) {
+		left = mk_true();
+		NEXT();
+	} else if (AT(TOK_FALSE)) {
+		left = mk_false();
+		NEXT();
 	} else if (AT(TOK_INT)) {
 		PARSE_INTO(left, int);
 	} else if ((CURR() < TOK_OP_MAX)

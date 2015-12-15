@@ -12,9 +12,13 @@ enum {
     TOK_RBRACE,
     TOK_IDENT,
     TOK_NL,
+
     TOK_WHILE,
     TOK_IF,
     TOK_DEF,
+    TOK_TRUE,
+    TOK_FALSE,
+
     TOK_INT,
     TOK_COMMA,
 
@@ -140,6 +144,8 @@ int rt_lexer_next(rt_lexer_t *l) {
                 if (TEXTEQ("while"))    return TOK_WHILE;
                 if (TEXTEQ("if"))       return TOK_IF;
                 if (TEXTEQ("def"))      return TOK_DEF;
+                if (TEXTEQ("true"))     return TOK_TRUE;
+                if (TEXTEQ("false"))    return TOK_FALSE;
                 return TOK_IDENT;
             } else if (digit_p(CURR())) {
                 MARK(); NEXT();
