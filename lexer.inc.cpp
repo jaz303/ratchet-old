@@ -9,6 +9,7 @@ enum {
 
     TOK_INT,
     TOK_IDENT,
+    TOK_STRING,
 
     TOK_WHILE,
     TOK_IF,
@@ -133,6 +134,31 @@ int rt_lexer_next(rt_lexer_t *l) {
                 EMIT(TOK_ASSIGN);
             } else {
                 ERROR("expected: '='");
+            }
+        case '"':
+            {
+                MARK(); NEXT();
+                int state = 0;
+                while (1) {
+                    if (CURR() == '\0') {
+                        ERROR("unexpected EOF");
+                    }
+                    switch (state) {
+                        case 0:
+                            if (CURR() == '\'') {
+                                state = 1;
+                            } else if (CURR() == '"') {
+                                NEXT();
+                                END();
+                                EMIT(TOK_STRING);
+                            }
+                            break;
+                        case 1:
+                            state = 0;
+                            break;
+                    }
+                    NEXT();
+                }
             }
         default:
             if (ident_start_p(CURR())) {
