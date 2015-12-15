@@ -167,11 +167,11 @@ int rt_lexer_next(rt_lexer_t *l) {
                     NEXT();
                 }
                 END();
-                if (TEXTEQ("while"))    return TOK_WHILE;
-                if (TEXTEQ("if"))       return TOK_IF;
-                if (TEXTEQ("def"))      return TOK_DEF;
-                if (TEXTEQ("true"))     return TOK_TRUE;
-                if (TEXTEQ("false"))    return TOK_FALSE;
+                if (TEXTEQ("while"))    EMIT(TOK_WHILE);
+                if (TEXTEQ("if"))       EMIT(TOK_IF);
+                if (TEXTEQ("def"))      EMIT(TOK_DEF);
+                if (TEXTEQ("true"))     EMIT(TOK_TRUE);
+                if (TEXTEQ("false"))    EMIT(TOK_FALSE);
                 EMIT(TOK_IDENT);
             } else if (digit_p(CURR())) {
                 MARK(); NEXT();
