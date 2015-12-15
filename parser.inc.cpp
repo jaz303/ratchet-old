@@ -142,6 +142,12 @@ val_t parse_ident(rt_parser_t *p) {
 	return mk_ident(sym);
 }
 
+val_t parse_string(rt_parser_t *p) {
+	val_t str = mk_string_from_token(p->lexer.tok, p->lexer.tok_len);
+	NEXT();
+	return str;
+}
+
 val_t parse_int(rt_parser_t *p) {
 	// TODO: overflow
 	// TODO: use correct int type
@@ -198,6 +204,8 @@ val_t parse_expression(rt_parser_t *p, int precedence) {
 	} else if (AT(TOK_FALSE)) {
 		left = mk_false();
 		NEXT();
+	} else if (AT(TOK_STRING)) {
+		PARSE_INTO(left, string);
 	} else if (AT(TOK_INT)) {
 		PARSE_INTO(left, int);
 	} else if ((CURR() < TOK_OP_MAX)

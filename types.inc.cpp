@@ -50,5 +50,10 @@ const opcode_t rt_simple_binop_opcodes[] = {
 };
 
 const opcode_t rt_simple_unop_opcodes[] = {
-    
+
 };
+
+typedef struct {
+    int length;
+    char str[0];
+} rt_string_t;
