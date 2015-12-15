@@ -7,4 +7,7 @@ clean:
 loc:
 	cat *.cpp *.x | wc -l
 
-.PHONY: clean loc
+todo:
+	@egrep -n '(TODO|FIXME)' *.cpp *.x
+
+.PHONY: clean loc todo
