@@ -105,7 +105,7 @@ val_t parse_expression_list(rt_parser_t *p) {
 		if (nil_p(head)) {
 			head = tail = node;
 		} else {
-			((ast_list_t*)tail.ast)->next = node;
+			((ast_list_t*)ast_val(tail))->next = node;
 			tail = node;
 		}
 		if (AT(TOK_COMMA)) {
@@ -294,7 +294,7 @@ val_t parse_fn_def(rt_parser_t *p) {
 				if (nil_p(params_head)) {
 					params_head = params_tail = node;
 				} else {
-					((ast_list_t*)params_tail.ast)->next = node;
+					((ast_list_t*)ast_val(params_tail))->next = node;
 					params_tail = node;
 				}
 				if (AT(TOK_COMMA)) {
@@ -344,7 +344,7 @@ val_t parse_statements(rt_parser_t *p, int terminator) {
 		if (nil_p(head)) {
 			head = tail = node;
 		} else {
-			((ast_list_t*)tail.ast)->next = node;
+			((ast_list_t*)ast_val(tail))->next = node;
 			tail = node;
 		}
 	}
