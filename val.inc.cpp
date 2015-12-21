@@ -122,3 +122,7 @@ int nil_p(val_t v) {
 int truthy_p(val_t v) {
     return (v.type != T_NIL) && (v.type != T_FALSE);
 }
+
+ast_node_t* ast_val(val_t v) {
+    return v.ast;
+}

@@ -127,13 +127,13 @@ val_t mk_ast_if(val_t cond, val_t body) {
 
 val_t ast_if_cons(val_t tail, val_t body) {
     val_t node = mk_ast_if(body);
-    ((ast_if_t*)tail.ast)->next = node;
+    ((ast_if_t*)ast_val(tail))->next = node;
     return node;
 }
 
 val_t ast_if_cons(val_t tail, val_t cond, val_t body) {
     val_t node = mk_ast_if(cond, body);
-    ((ast_if_t*)tail.ast)->next = node;
+    ((ast_if_t*)ast_val(tail))->next = node;
     return node;
 }
 
