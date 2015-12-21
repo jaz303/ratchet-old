@@ -1,7 +1,8 @@
 // AST node type tags
 // The actual AST structs are declared in ast.inc.cpp
 enum {
-    AST_BIN_OP, AST_CALL, AST_FN_DEF, AST_IDENT, AST_LIST, AST_PRINT, AST_UN_OP, AST_WHILE
+    AST_BIN_OP, AST_CALL, AST_FN_DEF, AST_IDENT, AST_IF,
+    AST_LIST, AST_PRINT, AST_UN_OP, AST_WHILE
 };
 
 #define OP_SHIFT 26

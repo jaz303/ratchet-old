@@ -255,6 +255,8 @@ val_t parse_if(rt_parser_t *p) {
 	PARSE(cond, expression, 0);
 	SKIP_NL();
 	PARSE(stmts, block);
+	val_t head = mk_ast_if(cond, stmts);
+	val_t tail = head;
 	while (AT(TOK_ELSE)) {
 		NEXT();
 		if (AT(TOK_IF)) {
@@ -262,14 +264,16 @@ val_t parse_if(rt_parser_t *p) {
 			PARSE(cond, expression, 0);
 			SKIP_NL();
 			PARSE(stmts, block);
+			tail = ast_if_cons(tail, cond, stmts);
 		} else {
 			SKIP_NL();
 			PARSE(stmts, block);
+			tail = ast_if_cons(tail, stmts);
 			break;
 		}
 	}
 	PDEBUG("< if");
-	return MK2(while, cond, stmts);
+	return head;
 }
 
 val_t parse_fn_def(rt_parser_t *p) {

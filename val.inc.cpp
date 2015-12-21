@@ -28,6 +28,11 @@ val_t mk_nil() {
     return out;
 }
 
+val_t mk_null() {
+    val_t out = { .type = T_AST, .ast = NULL };
+    return out;
+}
+
 val_t mk_true() {
     val_t out = { .type = T_TRUE };
     return out;

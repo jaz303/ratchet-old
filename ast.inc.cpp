@@ -28,6 +28,13 @@ typedef struct ast_fn_def {
     val_t body;
 } ast_fn_def_t;
 
+typedef struct ast_if {
+    ast_node_t base;
+    val_t cond;
+    val_t body;
+    val_t next;
+} ast_if_t;
+
 typedef struct ast_while {
     ast_node_t base;
     val_t cond;
@@ -100,6 +107,34 @@ val_t mk_ast_fn_def(int name, val_t params, val_t body) {
     node->params = params;
     node->body = body;
     return val;
+}
+
+val_t mk_ast_if(val_t body) {
+    ALLOC_AST(ast_if_t, AST_IF);
+    node->cond = mk_null();
+    node->body = body;
+    node->next = mk_null();
+    return val;
+}
+
+val_t mk_ast_if(val_t cond, val_t body) {
+    ALLOC_AST(ast_if_t, AST_IF);
+    node->cond = cond;
+    node->body = body;
+    node->next = mk_null();
+    return val;
+}
+
+val_t ast_if_cons(val_t tail, val_t body) {
+    val_t node = mk_ast_if(body);
+    ((ast_if_t*)tail.ast)->next = node;
+    return node;
+}
+
+val_t ast_if_cons(val_t tail, val_t cond, val_t body) {
+    val_t node = mk_ast_if(cond, body);
+    ((ast_if_t*)tail.ast)->next = node;
+    return node;
 }
 
 int ast_type(val_t v) {
