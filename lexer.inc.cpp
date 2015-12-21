@@ -121,10 +121,41 @@ int rt_lexer_next(rt_lexer_t *l) {
         case ')': NEXT(); EMIT(TOK_RPAREN);
         case '{': NEXT(); EMIT(TOK_LBRACE);
         case '}': NEXT(); EMIT(TOK_RBRACE);
-        case '<': NEXT(); EMIT(TOK_LT);
+        case '=': NEXT(); EMIT(TOK_EQ);
+        case '!':
+            NEXT();
+            if (CURR() == '=') {
+                NEXT();
+                EMIT(TOK_NEQ);
+            } else {
+                ERROR("expected: '='");
+            }
+        case '<':
+            NEXT();
+            if (CURR() == '=') {
+                NEXT();
+                EMIT(TOK_LE);
+            } else {
+                EMIT(TOK_LT);
+            }
+        case '>':
+            NEXT();
+            if (CURR() == '=') {
+                NEXT();
+                EMIT(TOK_GE);
+            } else {
+                EMIT(TOK_GT);
+            }
         case '+': NEXT(); EMIT(TOK_PLUS);
         case '-': NEXT(); EMIT(TOK_SUB);
-        case '*': NEXT(); EMIT(TOK_STAR);
+        case '*':
+            NEXT();
+            if (CURR() == '*') {
+                NEXT();
+                EMIT(TOK_TWOSTAR);
+            } else {
+                EMIT(TOK_STAR);    
+            }
         case '/': NEXT(); EMIT(TOK_SLASH);
         case ',': NEXT(); EMIT(TOK_COMMA);
         case ':':
