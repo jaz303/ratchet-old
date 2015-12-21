@@ -255,6 +255,19 @@ val_t parse_if(rt_parser_t *p) {
 	PARSE(cond, expression, 0);
 	SKIP_NL();
 	PARSE(stmts, block);
+	while (AT(TOK_ELSE)) {
+		NEXT();
+		if (AT(TOK_IF)) {
+			NEXT();
+			PARSE(cond, expression, 0);
+			SKIP_NL();
+			PARSE(stmts, block);
+		} else {
+			SKIP_NL();
+			PARSE(stmts, block);
+			break;
+		}
+	}
 	PDEBUG("< if");
 	return MK2(while, cond, stmts);
 }

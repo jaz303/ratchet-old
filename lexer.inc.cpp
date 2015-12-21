@@ -14,6 +14,7 @@ enum {
     TOK_WHILE,
     TOK_IF,
     TOK_DEF,
+    TOK_ELSE,
     TOK_TRUE,
     TOK_FALSE,
 
@@ -201,6 +202,7 @@ int rt_lexer_next(rt_lexer_t *l) {
                 if (TEXTEQ("while"))    EMIT(TOK_WHILE);
                 if (TEXTEQ("if"))       EMIT(TOK_IF);
                 if (TEXTEQ("def"))      EMIT(TOK_DEF);
+                if (TEXTEQ("else"))     EMIT(TOK_ELSE);
                 if (TEXTEQ("true"))     EMIT(TOK_TRUE);
                 if (TEXTEQ("false"))    EMIT(TOK_FALSE);
                 EMIT(TOK_IDENT);

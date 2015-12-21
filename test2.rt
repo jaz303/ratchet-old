@@ -15,6 +15,24 @@ def bleem( a,  b, c,  d ) {
 
 }
 
+if x < 10 {
+	p1()
+} else if y = 100 {
+	p2()
+} else {
+	p1()
+}
+
+if y {
+	p1()
+	p2()
+}
+
+if 1 + 2 {
+	printf(100)
+} else {
+	print(false)
+}
 
 
 while 0 {
