@@ -32,6 +32,7 @@ enum {
 typedef struct rt_lexer {
     char *text;
     size_t pos;
+    int was_cr;
     int line;
     int column;
     int tok_start;
@@ -70,12 +71,20 @@ int ident_rest_p(char c) {
 }
 
 void lexer_next(rt_lexer_t *l) {
-    // TODO: handle \r\n
-    if (l->text[l->pos] == '\n') {
+    if (l->text[l->pos] == '\r') {
         l->line++;
         l->column = 1;
+        l->was_cr = 1;
     } else {
-        l->column++;
+        if (l->text[l->pos] == '\n') {
+            if (!l->was_cr) {
+                l->line++;
+                l->column = 1;
+            }
+        } else {
+            l->column++;
+        }
+        l->was_cr = 0;
     }
     l->pos++;
 }
@@ -83,6 +92,7 @@ void lexer_next(rt_lexer_t *l) {
 void rt_lexer_init(rt_lexer_t *lexer, char *text) {
     lexer->text = text;
     lexer->pos = 0;
+    lexer->was_cr = 0;
     lexer->line = 1;
     lexer->column = 1;
     lexer->tok_start = 0;
@@ -94,6 +104,7 @@ void rt_lexer_init(rt_lexer_t *lexer, char *text) {
 void rt_lexer_clone(rt_lexer_t *d, const rt_lexer_t *s) {
     d->text = s->text;
     d->pos = s->pos;
+    d->was_cr = s->was_cr;
     d->line = s->line;
     d->column = s->column;
     d->tok_start = s->tok_start;
