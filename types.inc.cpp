@@ -4,19 +4,27 @@ enum {
     AST_BIN_OP, AST_CALL, AST_FN_DEF, AST_IDENT, AST_LIST, AST_PRINT, AST_UN_OP, AST_WHILE
 };
 
+#define OP_SHIFT 26
+#define OP_BITS(x) (x << OP_SHIFT)
+
 enum opcode_t {
-    OP_PRINT    = (1 << 26),
-    OP_HALT     = (2 << 26),
-    OP_ADD      = (3 << 26),
-    OP_SUB      = (4 << 26),
-    OP_MUL      = (5 << 26),
-    OP_DIV      = (6 << 26),
-    OP_LOADK    = (7 << 26),
-    OP_COPY     = (8 << 26),
-    OP_CALL     = (9 << 26),
-    OP_LT       = (10 << 26),
-    OP_JMP      = (11 << 26),
-    OP_JMPF     = (12 << 26)
+    OP_PRINT    = OP_BITS(1),
+    OP_HALT     = OP_BITS(2),
+    OP_ADD      = OP_BITS(3),
+    OP_SUB      = OP_BITS(4),
+    OP_MUL      = OP_BITS(5),
+    OP_DIV      = OP_BITS(6),
+    OP_LOADK    = OP_BITS(7),
+    OP_COPY     = OP_BITS(8),
+    OP_CALL     = OP_BITS(9),
+    OP_LT       = OP_BITS(10),
+    OP_LE       = OP_BITS(11),
+    OP_GT       = OP_BITS(12),
+    OP_GE       = OP_BITS(13),
+    OP_EQ       = OP_BITS(12),
+    OP_NEQ      = OP_BITS(13),
+    OP_JMP      = OP_BITS(11),
+    OP_JMPF     = OP_BITS(12)
 };
 
 // Mask that identifies an operator_t as a simple binary operator;
@@ -52,7 +60,12 @@ const opcode_t rt_simple_binop_opcodes[] = {
     OP_SUB,
     OP_MUL,
     OP_DIV,
-    OP_LT
+    OP_LT,
+    OP_LE,
+    OP_GT,
+    OP_GE,
+    OP_EQ,
+    OP_NEQ
 };
 
 const opcode_t rt_simple_unop_opcodes[] = {
